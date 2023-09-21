@@ -1,25 +1,6 @@
 use orion::operators::tensor::{Tensor, U32Tensor,};
 use orion::numbers::i32;
 
-#[derive(Copy, Drop)]
-enum Modes {
-    Major: (),
-    Minor: (),
-    Lydian: (),
-    Mixolydian: (),
-    Dorian: (),
-    Phrygian: (),
-    Locrian: (),
-    Aeolian: (),
-    Harmonicminor: (),
-    Naturalminor: (),
-    Chromatic: (),
-    Pentatonic: ()
-}
-
-#[derive(Copy, Drop)]
-enum ArpPattern {} //TODO
-
 /// # Midi Type
 /// A Midi Data is a 3D Tensor:
 /// 1st dimension represents the Midi features (Piano Roll, Velocity, Pitch Bend) // TODO: Casey - Choose features by dimension
@@ -120,3 +101,21 @@ impl MidiImpl of MidiTrait {
     }
 }
 
+#[derive(Copy, Drop)]
+enum Modes {
+    Major: (),
+    Minor: (),
+    Lydian: (),
+    Mixolydian: (),
+    Dorian: (),
+    Phrygian: (),
+    Locrian: (),
+    Aeolian: (),
+    Harmonicminor: (),
+    Naturalminor: (),
+    Chromatic: (),
+    Pentatonic: ()
+}
+
+#[derive(Copy, Drop)]
+enum ArpPattern {} //TODO

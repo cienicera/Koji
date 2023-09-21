@@ -1,2 +1,1 @@
-mod toolbox;
-mod contract;
+mod midi;

@@ -2,7 +2,7 @@ use core::option::OptionTrait;
 use array::ArrayTrait;
 use array::SpanTrait;
 
-use cairo_music::toolbox::core::{PitchClass, OCTAVEBASE, Direction};
+use koji::toolbox::core::{PitchClass, OCTAVEBASE, Direction};
 
 //*****************************************************************************************************************
 // PitchClass and Note Utils 

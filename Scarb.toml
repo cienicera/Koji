@@ -1,5 +1,5 @@
 [package]
-name = "cairo_music"
+name = "koji"
 version = "0.1.0"
 
 [dependencies]

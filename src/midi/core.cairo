@@ -1,28 +1,14 @@
 use orion::operators::tensor::{Tensor, U32Tensor,};
 use orion::numbers::i32;
 
-/// # Midi Type
-/// A Midi Data is a 3D Tensor:
-/// 1st dimension represents the Midi features (Piano Roll, Velocity, Pitch Bend) // TODO: Casey - Choose features by dimension
-/// 2nd dimension represents the pitches.
-/// 3rd dimension represents the time steps.
-#[derive(Copy, Drop)]
-struct Midi {
-    tempo: u32,
-    time_signature: (u8, u8),
-    chanel: Option<u32>,
-    data: Tensor<u32>
-// TODO: Casey - Is there any other relevant field we should add ?
-}
-
-// 
-#[derive(Copy, Drop)]
-struct VelocityCurve {} // TODO
+use koji::midi::types::{Midi, Message, Modes, ArpPattern, VelocityCurve};
 
 trait MidiTrait {
     /// =========== NOTE MANIPULATION ===========
     /// Instantiate a Midi.
-    fn new(tempo: u32, time_signature: (u8, u8), chanel: Option<u32>, data: Tensor<u32>) -> Midi;
+    fn new() -> Midi;
+    /// Set a message in a Midi object.
+    fn set_message(self: @Midi, msg: Message) -> Midi;
     /// Transpose notes by a given number of semitones.
     fn transpose_notes(self: @Midi, semitones: i32) -> Midi;
     ///  Reverse the order of notes.
@@ -52,9 +38,12 @@ trait MidiTrait {
 }
 
 impl MidiImpl of MidiTrait {
-    fn new(tempo: u32, time_signature: (u8, u8), chanel: Option<u32>, data: Tensor<u32>) -> Midi {
-        assert(data.shape.len() == 3, 'Midi Data must be 3D');
-        Midi { tempo, time_signature, chanel, data }
+    fn new() -> Midi {
+        Midi { events: array![].span() }
+    }
+
+    fn set_message(self: @Midi, msg: Message) -> Midi {
+        panic(array!['not supported yet'])
     }
 
     fn transpose_notes(self: @Midi, semitones: i32) -> Midi {
@@ -101,21 +90,3 @@ impl MidiImpl of MidiTrait {
     }
 }
 
-#[derive(Copy, Drop)]
-enum Modes {
-    Major: (),
-    Minor: (),
-    Lydian: (),
-    Mixolydian: (),
-    Dorian: (),
-    Phrygian: (),
-    Locrian: (),
-    Aeolian: (),
-    Harmonicminor: (),
-    Naturalminor: (),
-    Chromatic: (),
-    Pentatonic: ()
-}
-
-#[derive(Copy, Drop)]
-enum ArpPattern {} //TODO

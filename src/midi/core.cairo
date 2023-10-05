@@ -74,7 +74,34 @@ impl MidiImpl of MidiTrait {
     }
 
     fn get_bpm(self: @Midi) -> u32 {
-        panic(array!['not supported yet'])
+        // Iterate through the MIDI events, find and return the SetTempo message
+        let mut ev = self.clone().events;
+        let mut outtempo: u32 = 0;
+        let mut i = 0;
+
+        loop {
+            if i == ev.len() {
+                break;
+            }
+
+            let currentevent = ev.at(i);
+
+            match currentevent {
+                Message::NOTE_ON(NoteOn) => {},
+                Message::NOTE_OFF(NoteOff) => {},
+                Message::SET_TEMPO(SetTempo) => {
+                    outtempo = *SetTempo.tempo;
+                },
+                Message::TIME_SIGNATURE(TimeSignature) => {},
+                Message::CONTROL_CHANGE(ControlChange) => {},
+                Message::PITCH_WHEEL(PitchWheel) => {},
+                Message::AFTER_TOUCH(AfterTouch) => {},
+                Message::POLY_TOUCH(PolyTouch) => {},
+            }
+            i += 1;
+        };
+
+        outtempo
     }
 
     fn generate_harmony(self: @Midi, modes: Modes) -> Midi {

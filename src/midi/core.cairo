@@ -1,7 +1,9 @@
 use orion::operators::tensor::{Tensor, U32Tensor,};
 use orion::numbers::i32;
 
-use koji::midi::types::{Midi, Message, Modes, ArpPattern, VelocityCurve};
+use koji::midi::types::{
+    Midi, Message, Modes, ArpPattern, VelocityCurve, SetTempo, TimeSignature, NoteOn
+};
 
 trait MidiTrait {
     /// =========== NOTE MANIPULATION ===========
@@ -66,7 +68,53 @@ impl MidiImpl of MidiTrait {
     }
 
     fn change_tempo(self: @Midi, new_tempo: u32) -> Midi {
-        panic(array!['not supported yet'])
+        // Iterate through the MIDI events and update the SetTempo messages
+        let mut ev = self.clone().events;
+
+        //create output event list and tempo data to test
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        let tempo = SetTempo { tempo: new_tempo, time: Option::None };
+        let tempomessage = Message::SET_TEMPO((tempo));
+
+        let mut i = 0;
+        loop {
+            if i == ev.len() {
+                break;
+            }
+
+            let currentevent = ev.at(i);
+
+            match currentevent {
+                Message::NOTE_ON(NoteOn) => {
+                    eventlist.append(*currentevent);
+                },
+                Message::NOTE_OFF(NoteOff) => {
+                    eventlist.append(*currentevent);
+                },
+                Message::SET_TEMPO(SetTempo) => {
+                    eventlist.append(tempomessage);
+                },
+                Message::TIME_SIGNATURE(TimeSignature) => {
+                    eventlist.append(*currentevent);
+                },
+                Message::CONTROL_CHANGE(ControlChange) => {
+                    eventlist.append(*currentevent);
+                },
+                Message::PITCH_WHEEL(PitchWheel) => {
+                    eventlist.append(*currentevent);
+                },
+                Message::AFTER_TOUCH(AfterTouch) => {
+                    eventlist.append(*currentevent);
+                },
+                Message::POLY_TOUCH(PolyTouch) => {
+                    eventlist.append(*currentevent);
+                },
+            }
+            i += 1;
+        };
+
+        Midi { events: eventlist.span() }
     }
 
     fn remap_instruments(self: @Midi, chanel: u32) -> Midi {

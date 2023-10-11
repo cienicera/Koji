@@ -60,65 +60,57 @@ impl MidiImpl of MidiTrait {
     }
 
     fn extract_notes(self: @Midi, note_range: usize) -> Midi {
-        /// Extract notes within a specified pitch range from middle c
         let mut ev = self.clone().events;
-        let mut currentnote: u8 = 0;
 
-        //note range is defined as +- middlec. EG note_range== 12 -> 48 - 72
         let middlec = 60;
         let mut lowerbound = 0;
         let mut upperbound = 127;
 
-        if (note_range < middlec) {
+        if note_range < middlec {
             lowerbound = middlec - note_range;
         }
-        if ((note_range + middlec) < 127) {
+        if note_range + middlec < 127 {
             upperbound = middlec + note_range;
         }
 
-        let mut i = 0;
-
-        //create output event list and tempo data to test
         let mut eventlist = ArrayTrait::<Message>::new();
 
         loop {
-            if i == ev.len() {
-                break;
-            }
-
-            let currentevent = ev.at(i);
-
-            match currentevent {
-                Message::NOTE_ON(NoteOn) => {
-                    let currentnoteon = *NoteOn.note;
-
-                    if (currentnoteon > lowerbound.try_into().unwrap()) {
-                        if (currentnoteon < upperbound.try_into().unwrap()) {
-                            eventlist.append(*currentevent);
-                        }
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            let currentnoteon = *NoteOn.note;
+                            if currentnoteon > lowerbound.try_into().unwrap()
+                                && currentnoteon < upperbound.try_into().unwrap() {
+                                eventlist.append(*currentevent);
+                            }
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            let currentnoteoff = *NoteOff.note;
+                            if currentnoteoff > lowerbound.try_into().unwrap()
+                                && currentnoteoff < upperbound.try_into().unwrap() {
+                                eventlist.append(*currentevent);
+                            }
+                        },
+                        Message::SET_TEMPO(SetTempo) => {},
+                        Message::TIME_SIGNATURE(TimeSignature) => {},
+                        Message::CONTROL_CHANGE(ControlChange) => {},
+                        Message::PITCH_WHEEL(PitchWheel) => {},
+                        Message::AFTER_TOUCH(AfterTouch) => {},
+                        Message::POLY_TOUCH(PolyTouch) => {},
                     }
                 },
-                Message::NOTE_OFF(NoteOff) => {
-                    let currentnoteoff = *NoteOff.note;
-
-                    if (currentnoteoff > lowerbound.try_into().unwrap()) {
-                        if (currentnoteoff < upperbound.try_into().unwrap()) {
-                            eventlist.append(*currentevent);
-                        }
-                    }
-                },
-                Message::SET_TEMPO(SetTempo) => {},
-                Message::TIME_SIGNATURE(TimeSignature) => {},
-                Message::CONTROL_CHANGE(ControlChange) => {},
-                Message::PITCH_WHEEL(PitchWheel) => {},
-                Message::AFTER_TOUCH(AfterTouch) => {},
-                Message::POLY_TOUCH(PolyTouch) => {},
-            }
-            i += 1;
+                Option::None(_) => {
+                    break;
+                }
+            };
         };
 
+        // Create a new Midi object with the modified event list
         Midi { events: eventlist.span() }
     }
+
 
     fn change_note_duration(self: @Midi, factor: i32) -> Midi {
         panic(array!['not supported yet'])

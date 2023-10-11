@@ -88,7 +88,7 @@ impl MidiImpl of MidiTrait {
                         },
                         Message::SET_TEMPO(SetTempo) => {
                             // Create a new SetTempo message with the updated tempo
-                            let tempo = SetTempo { tempo: new_tempo, time: Option::None };
+                            let tempo = SetTempo { tempo: new_tempo, time: *SetTempo.time };
                             let tempomessage = Message::SET_TEMPO((tempo));
                             eventlist.append(tempomessage);
                         },

@@ -77,28 +77,27 @@ impl MidiImpl of MidiTrait {
         // Iterate through the MIDI events, find and return the SetTempo message
         let mut ev = self.clone().events;
         let mut outtempo: u32 = 0;
-        let mut i = 0;
 
         loop {
-            if i == ev.len() {
-                break;
-            }
-
-            let currentevent = ev.at(i);
-
-            match currentevent {
-                Message::NOTE_ON(NoteOn) => {},
-                Message::NOTE_OFF(NoteOff) => {},
-                Message::SET_TEMPO(SetTempo) => {
-                    outtempo = *SetTempo.tempo;
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {},
+                        Message::NOTE_OFF(NoteOff) => {},
+                        Message::SET_TEMPO(SetTempo) => {
+                            outtempo = *SetTempo.tempo;
+                        },
+                        Message::TIME_SIGNATURE(TimeSignature) => {},
+                        Message::CONTROL_CHANGE(ControlChange) => {},
+                        Message::PITCH_WHEEL(PitchWheel) => {},
+                        Message::AFTER_TOUCH(AfterTouch) => {},
+                        Message::POLY_TOUCH(PolyTouch) => {},
+                    }
                 },
-                Message::TIME_SIGNATURE(TimeSignature) => {},
-                Message::CONTROL_CHANGE(ControlChange) => {},
-                Message::PITCH_WHEEL(PitchWheel) => {},
-                Message::AFTER_TOUCH(AfterTouch) => {},
-                Message::POLY_TOUCH(PolyTouch) => {},
-            }
-            i += 1;
+                Option::None(_) => {
+                    break;
+                }
+            };
         };
 
         outtempo

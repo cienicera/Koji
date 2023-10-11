@@ -68,52 +68,55 @@ impl MidiImpl of MidiTrait {
     }
 
     fn change_tempo(self: @Midi, new_tempo: u32) -> Midi {
-        // Iterate through the MIDI events and update the SetTempo messages
+        // Create a clone of the MIDI events
         let mut ev = self.clone().events;
 
-        //create output event list and tempo data to test
+        // Create a new array to store the modified events
         let mut eventlist = ArrayTrait::<Message>::new();
 
-        let tempo = SetTempo { tempo: new_tempo, time: Option::None };
-        let tempomessage = Message::SET_TEMPO((tempo));
-
-        let mut i = 0;
         loop {
-            if i == ev.len() {
-                break;
-            }
-
-            let currentevent = ev.at(i);
-
-            match currentevent {
-                Message::NOTE_ON(NoteOn) => {
-                    eventlist.append(*currentevent);
+            // Use pop_front to get the next event
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    // Process the current event
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::SET_TEMPO(SetTempo) => {
+                            // Create a new SetTempo message with the updated tempo
+                            let tempo = SetTempo { tempo: new_tempo, time: Option::None };
+                            let tempomessage = Message::SET_TEMPO((tempo));
+                            eventlist.append(tempomessage);
+                        },
+                        Message::TIME_SIGNATURE(TimeSignature) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::CONTROL_CHANGE(ControlChange) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::PITCH_WHEEL(PitchWheel) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::AFTER_TOUCH(AfterTouch) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::POLY_TOUCH(PolyTouch) => {
+                            eventlist.append(*currentevent);
+                        },
+                    }
                 },
-                Message::NOTE_OFF(NoteOff) => {
-                    eventlist.append(*currentevent);
-                },
-                Message::SET_TEMPO(SetTempo) => {
-                    eventlist.append(tempomessage);
-                },
-                Message::TIME_SIGNATURE(TimeSignature) => {
-                    eventlist.append(*currentevent);
-                },
-                Message::CONTROL_CHANGE(ControlChange) => {
-                    eventlist.append(*currentevent);
-                },
-                Message::PITCH_WHEEL(PitchWheel) => {
-                    eventlist.append(*currentevent);
-                },
-                Message::AFTER_TOUCH(AfterTouch) => {
-                    eventlist.append(*currentevent);
-                },
-                Message::POLY_TOUCH(PolyTouch) => {
-                    eventlist.append(*currentevent);
-                },
-            }
-            i += 1;
+                Option::None(_) => {
+                    // If there are no more events, break out of the loop
+                    break;
+                }
+            };
         };
 
+        // Create a new Midi object with the modified event list
         Midi { events: eventlist.span() }
     }
 

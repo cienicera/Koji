@@ -98,17 +98,19 @@ fn diff_between_pc(pc1: PitchClass, pc2: PitchClass) -> (u8, Direction) {
     }
 }
 
-//Provide Array, Compute and Return notes of mode at note base - note base is omitted
 fn mode_notes_above_note_base(mut arr: Span<u8>, mut new_arr: Array<u8>, note: u8) -> Span<u8> {
-    let new_note = note;
+    let mut new_note = note;
 
     loop {
-        if arr.len() == 0 {
-            break;
+        match arr.pop_front() {
+            Option::Some(current_note) => {
+                new_note = (current_note + new_note) % OCTAVEBASE;
+                new_arr.append(new_note);
+            },
+            Option::None(_) => {
+                break;
+            }
         }
-
-        let new_note = (*arr.pop_front().unwrap() + new_note) % OCTAVEBASE;
-        new_arr.append(new_note);
     };
 
     new_arr.span()
@@ -118,16 +120,17 @@ fn mode_notes_above_note_base2(pc: PitchClass, pcoll: Span<u8>) -> Span<u8> {
     let mut outarr = ArrayTrait::new();
 
     let mut sum = pc.note;
-    let mut i = 0;
 
     loop {
-        if i >= pcoll.len() - 1 {
-            break;
+        match pcoll.pop_front() {
+            Option::Some(step) => {
+                sum += step;
+                outarr.append(sum % OCTAVEBASE);
+            },
+            Option::None(_) => {
+                break;
+            }
         }
-
-        let step = *pcoll.at(i);
-        sum += step;
-        outarr.append(sum % OCTAVEBASE);
     };
 
     outarr.span()
@@ -145,24 +148,23 @@ fn get_notes_of_key(tonic: u8, mode: Span<u8>) -> Span<u8> {
 // Functions that compute collect notes of a mode at a specified pitch base in Normal Form (% OCTAVEBASE)
 // Example: E Major -> [1,3,4,6,8,9,11]  (C#,D#,E,F#,G#,A,B)
 
-fn get_notes_of_key2(pc: PitchClass, pcoll: Span<u8>) -> Span<u8> {
+fn get_notes_of_key2(pc: PitchClass, mut pcoll: Span<u8>) -> Span<u8> {
     let mut outarr = ArrayTrait::<u8>::new();
 
     let mut sum = pc.note;
-    let mut i = 0;
 
     outarr.append(sum);
 
     loop {
-        if i >= pcoll.len() - 1 {
-            break;
+        match pcoll.pop_front() {
+            Option::Some(step) => {
+                sum += step;
+                outarr.append(sum % OCTAVEBASE);
+            },
+            Option::None(_) => {
+                break;
+            }
         }
-
-        let step = *pcoll.at(i);
-        sum += step;
-        outarr.append(sum % OCTAVEBASE);
-
-        i += 1;
     };
 
     outarr.span()
@@ -172,30 +174,25 @@ fn get_notes_of_key2(pc: PitchClass, pcoll: Span<u8>) -> Span<u8> {
 // In this implementation, Scale degrees doesn't use zero-based counting - Zero if the note is note present in the key.
 // Perhaps implement Option for when a note is not a scale degree          
 
-fn get_scale_degree(pc: PitchClass, tonic: PitchClass, pcoll: Span<u8>) -> u8 {
+fn get_scale_degree(pc: PitchClass, tonic: PitchClass, mut pcoll: Span<u8>) -> u8 {
     let mut notesofkey = tonic.get_notes_of_key(pcoll.snapshot.clone().span());
-    let mut i = 0;
     let mut outdegree = 0;
 
     loop {
-        if i >= notesofkey.len() {
-            break;
+        match notesofkey.pop_front() {
+            Option::Some(note) => {
+                if pc.note == note {
+                    outdegree = notesofkey.len() as u8 + 1;
+                }
+            },
+            Option::None(_) => {
+                break;
+            }
         }
-
-        if pc.note == *notesofkey.at(i) {
-            outdegree = i + 1;
-        // 'Scale Degree is:'.print();
-        //  outdegree.print();
-        }
-
-        i += 1;
     };
 
-    let scaledegree: u8 = outdegree.try_into().unwrap();
-
-    scaledegree
+    outdegree
 }
-
 
 fn modal_transposition(
     pc: PitchClass, tonic: PitchClass, pcoll: Span<u8>, numsteps: u8, direction: Direction

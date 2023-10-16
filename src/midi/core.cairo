@@ -1,9 +1,8 @@
 use orion::operators::tensor::{Tensor, U32Tensor,};
-use orion::numbers::i32;
+use orion::numbers::{FP32x32, i32};
 
-use koji::midi::types::{
-    Midi, Message, Modes, ArpPattern, VelocityCurve, SetTempo, TimeSignature, NoteOn, NoteOff
-};
+use koji::midi::types::{Midi, Message, Modes, ArpPattern, VelocityCurve, NoteOn, NoteOff, SetTempo, TimeSignature,};
+use koji::midi::time::round_to_nearest_nth;
 
 trait MidiTrait {
     /// =========== NOTE MANIPULATION ===========
@@ -122,7 +121,61 @@ impl MidiImpl of MidiTrait {
     }
 
     fn quantize_notes(self: @Midi, grid_size: usize) -> Midi {
-        panic(array!['not supported yet'])
+        let mut ev = self.clone().events;
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            let newnote = NoteOn {
+                                channel: *NoteOn.channel,
+                                note: *NoteOn.note,
+                                velocity: *NoteOn.velocity,
+                                time: round_to_nearest_nth(*NoteOn.time, grid_size)
+                            };
+                            let notemessage = Message::NOTE_ON((newnote));
+                            eventlist.append(notemessage);
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            let newnote = NoteOff {
+                                channel: *NoteOff.channel,
+                                note: *NoteOff.note,
+                                velocity: *NoteOff.velocity,
+                                time: round_to_nearest_nth(*NoteOff.time, grid_size)
+                            };
+                            let notemessage = Message::NOTE_OFF((newnote));
+                            eventlist.append(notemessage);
+                        },
+                        Message::SET_TEMPO(SetTempo) => {
+                            eventlist.append(*currentevent)
+                        },
+                        Message::TIME_SIGNATURE(TimeSignature) => {
+                            eventlist.append(*currentevent)
+                        },
+                        Message::CONTROL_CHANGE(ControlChange) => {
+                            eventlist.append(*currentevent)
+                        },
+                        Message::PITCH_WHEEL(PitchWheel) => {
+                            eventlist.append(*currentevent)
+                        },
+                        Message::AFTER_TOUCH(AfterTouch) => {
+                            eventlist.append(*currentevent)
+                        },
+                        Message::POLY_TOUCH(PolyTouch) => {
+                            eventlist.append(*currentevent)
+                        },
+                    }
+                },
+                Option::None(_) => {
+                    break;
+                }
+            };
+        };
+
+        // Create a new Midi object with the modified event list
+        Midi { events: eventlist.span() }
     }
 
     fn extract_notes(self: @Midi, note_range: usize) -> Midi {

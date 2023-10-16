@@ -2,7 +2,7 @@ use orion::operators::tensor::{Tensor, U32Tensor,};
 use orion::numbers::i32;
 
 use koji::midi::types::{
-    Midi, Message, Modes, ArpPattern, VelocityCurve, SetTempo, TimeSignature, NoteOn
+    Midi, Message, Modes, ArpPattern, VelocityCurve, SetTempo, TimeSignature, NoteOn, NoteOff
 };
 
 trait MidiTrait {
@@ -49,7 +49,72 @@ impl MidiImpl of MidiTrait {
     }
 
     fn transpose_notes(self: @Midi, semitones: i32) -> Midi {
-        panic(array!['not supported yet'])
+        let mut ev = self.clone().events;
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            let outnote = if semitones.sign {
+                                *NoteOn.note - semitones.mag.try_into().unwrap()
+                            } else {
+                                *NoteOn.note + semitones.mag.try_into().unwrap()
+                            };
+
+                            let newnote = NoteOn {
+                                channel: *NoteOn.channel,
+                                note: outnote,
+                                velocity: *NoteOn.velocity,
+                                time: *NoteOn.time
+                            };
+                            let notemessage = Message::NOTE_ON((newnote));
+                            eventlist.append(notemessage);
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            let outnote = if semitones.sign {
+                                *NoteOff.note - semitones.mag.try_into().unwrap()
+                            } else {
+                                *NoteOff.note + semitones.mag.try_into().unwrap()
+                            };
+
+                            let newnote = NoteOff {
+                                channel: *NoteOff.channel,
+                                note: outnote,
+                                velocity: *NoteOff.velocity,
+                                time: *NoteOff.time
+                            };
+                            let notemessage = Message::NOTE_OFF((newnote));
+                            eventlist.append(notemessage);
+                        },
+                        Message::SET_TEMPO(SetTempo) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::TIME_SIGNATURE(TimeSignature) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::CONTROL_CHANGE(ControlChange) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::PITCH_WHEEL(PitchWheel) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::AFTER_TOUCH(AfterTouch) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::POLY_TOUCH(PolyTouch) => {
+                            eventlist.append(*currentevent);
+                        },
+                    }
+                },
+                Option::None(_) => {
+                    break;
+                }
+            };
+        };
+
+        Midi { events: eventlist.span() }
     }
 
     fn reverse_notes(self: @Midi) -> Midi {

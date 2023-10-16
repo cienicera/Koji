@@ -5,6 +5,7 @@ use koji::midi::types::{
     Midi, Message, Modes, ArpPattern, VelocityCurve, NoteOn, NoteOff, SetTempo, TimeSignature,
     ControlChange, PitchWheel, AfterTouch, PolyTouch
 };
+use koji::midi::time::round_to_nearest_nth;
 
 trait MidiTrait {
     /// =========== NOTE MANIPULATION ===========
@@ -50,7 +51,72 @@ impl MidiImpl of MidiTrait {
     }
 
     fn transpose_notes(self: @Midi, semitones: i32) -> Midi {
-        panic(array!['not supported yet'])
+        let mut ev = self.clone().events;
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            let outnote = if semitones.sign {
+                                *NoteOn.note - semitones.mag.try_into().unwrap()
+                            } else {
+                                *NoteOn.note + semitones.mag.try_into().unwrap()
+                            };
+
+                            let newnote = NoteOn {
+                                channel: *NoteOn.channel,
+                                note: outnote,
+                                velocity: *NoteOn.velocity,
+                                time: *NoteOn.time
+                            };
+                            let notemessage = Message::NOTE_ON((newnote));
+                            eventlist.append(notemessage);
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            let outnote = if semitones.sign {
+                                *NoteOff.note - semitones.mag.try_into().unwrap()
+                            } else {
+                                *NoteOff.note + semitones.mag.try_into().unwrap()
+                            };
+
+                            let newnote = NoteOff {
+                                channel: *NoteOff.channel,
+                                note: outnote,
+                                velocity: *NoteOff.velocity,
+                                time: *NoteOff.time
+                            };
+                            let notemessage = Message::NOTE_OFF((newnote));
+                            eventlist.append(notemessage);
+                        },
+                        Message::SET_TEMPO(SetTempo) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::TIME_SIGNATURE(TimeSignature) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::CONTROL_CHANGE(ControlChange) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::PITCH_WHEEL(PitchWheel) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::AFTER_TOUCH(AfterTouch) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::POLY_TOUCH(PolyTouch) => {
+                            eventlist.append(*currentevent);
+                        },
+                    }
+                },
+                Option::None(_) => {
+                    break;
+                }
+            };
+        };
+
+        Midi { events: eventlist.span() }
     }
 
     fn reverse_notes(self: @Midi) -> Midi {
@@ -58,12 +124,116 @@ impl MidiImpl of MidiTrait {
     }
 
     fn quantize_notes(self: @Midi, grid_size: usize) -> Midi {
-        panic(array!['not supported yet'])
+        let mut ev = self.clone().events;
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            let newnote = NoteOn {
+                                channel: *NoteOn.channel,
+                                note: *NoteOn.note,
+                                velocity: *NoteOn.velocity,
+                                time: round_to_nearest_nth(*NoteOn.time, grid_size)
+                            };
+                            let notemessage = Message::NOTE_ON((newnote));
+                            eventlist.append(notemessage);
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            let newnote = NoteOff {
+                                channel: *NoteOff.channel,
+                                note: *NoteOff.note,
+                                velocity: *NoteOff.velocity,
+                                time: round_to_nearest_nth(*NoteOff.time, grid_size)
+                            };
+                            let notemessage = Message::NOTE_OFF((newnote));
+                            eventlist.append(notemessage);
+                        },
+                        Message::SET_TEMPO(SetTempo) => {
+                            eventlist.append(*currentevent)
+                        },
+                        Message::TIME_SIGNATURE(TimeSignature) => {
+                            eventlist.append(*currentevent)
+                        },
+                        Message::CONTROL_CHANGE(ControlChange) => {
+                            eventlist.append(*currentevent)
+                        },
+                        Message::PITCH_WHEEL(PitchWheel) => {
+                            eventlist.append(*currentevent)
+                        },
+                        Message::AFTER_TOUCH(AfterTouch) => {
+                            eventlist.append(*currentevent)
+                        },
+                        Message::POLY_TOUCH(PolyTouch) => {
+                            eventlist.append(*currentevent)
+                        },
+                    }
+                },
+                Option::None(_) => {
+                    break;
+                }
+            };
+        };
+
+        // Create a new Midi object with the modified event list
+        Midi { events: eventlist.span() }
     }
 
     fn extract_notes(self: @Midi, note_range: usize) -> Midi {
-        panic(array!['not supported yet'])
+        let mut ev = self.clone().events;
+
+        let middlec = 60;
+        let mut lowerbound = 0;
+        let mut upperbound = 127;
+
+        if note_range < middlec {
+            lowerbound = middlec - note_range;
+        }
+        if note_range + middlec < 127 {
+            upperbound = middlec + note_range;
+        }
+
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            let currentnoteon = *NoteOn.note;
+                            if currentnoteon > lowerbound.try_into().unwrap()
+                                && currentnoteon < upperbound.try_into().unwrap() {
+                                eventlist.append(*currentevent);
+                            }
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            let currentnoteoff = *NoteOff.note;
+                            if currentnoteoff > lowerbound.try_into().unwrap()
+                                && currentnoteoff < upperbound.try_into().unwrap() {
+                                eventlist.append(*currentevent);
+                            }
+                        },
+                        Message::SET_TEMPO(SetTempo) => {},
+                        Message::TIME_SIGNATURE(TimeSignature) => {},
+                        Message::CONTROL_CHANGE(ControlChange) => {},
+                        Message::PITCH_WHEEL(PitchWheel) => {},
+                        Message::AFTER_TOUCH(AfterTouch) => {},
+                        Message::POLY_TOUCH(PolyTouch) => {},
+                    }
+                },
+                Option::None(_) => {
+                    break;
+                }
+            };
+        };
+
+        // Create a new Midi object with the modified event list
+        Midi { events: eventlist.span() }
     }
+
+
     fn change_note_duration(self: @Midi, factor: i32) -> Midi {
         let newfactor = FP32x32 { mag: factor.mag.into(), sign: factor.sign };
         let mut ev = self.clone().events;
@@ -168,7 +338,56 @@ impl MidiImpl of MidiTrait {
     }
 
     fn change_tempo(self: @Midi, new_tempo: u32) -> Midi {
-        panic(array!['not supported yet'])
+        // Create a clone of the MIDI events
+        let mut ev = self.clone().events;
+
+        // Create a new array to store the modified events
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        loop {
+            // Use pop_front to get the next event
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    // Process the current event
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::SET_TEMPO(SetTempo) => {
+                            // Create a new SetTempo message with the updated tempo
+                            let tempo = SetTempo { tempo: new_tempo, time: *SetTempo.time };
+                            let tempomessage = Message::SET_TEMPO((tempo));
+                            eventlist.append(tempomessage);
+                        },
+                        Message::TIME_SIGNATURE(TimeSignature) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::CONTROL_CHANGE(ControlChange) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::PITCH_WHEEL(PitchWheel) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::AFTER_TOUCH(AfterTouch) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::POLY_TOUCH(PolyTouch) => {
+                            eventlist.append(*currentevent);
+                        },
+                    }
+                },
+                Option::None(_) => {
+                    // If there are no more events, break out of the loop
+                    break;
+                }
+            };
+        };
+
+        // Create a new Midi object with the modified event list
+        Midi { events: eventlist.span() }
     }
 
     fn remap_instruments(self: @Midi, chanel: u32) -> Midi {
@@ -176,7 +395,33 @@ impl MidiImpl of MidiTrait {
     }
 
     fn get_bpm(self: @Midi) -> u32 {
-        panic(array!['not supported yet'])
+        // Iterate through the MIDI events, find and return the SetTempo message
+        let mut ev = self.clone().events;
+        let mut outtempo: u32 = 0;
+
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {},
+                        Message::NOTE_OFF(NoteOff) => {},
+                        Message::SET_TEMPO(SetTempo) => {
+                            outtempo = *SetTempo.tempo;
+                        },
+                        Message::TIME_SIGNATURE(TimeSignature) => {},
+                        Message::CONTROL_CHANGE(ControlChange) => {},
+                        Message::PITCH_WHEEL(PitchWheel) => {},
+                        Message::AFTER_TOUCH(AfterTouch) => {},
+                        Message::POLY_TOUCH(PolyTouch) => {},
+                    }
+                },
+                Option::None(_) => {
+                    break;
+                }
+            };
+        };
+
+        outtempo
     }
 
     fn generate_harmony(self: @Midi, modes: Modes) -> Midi {

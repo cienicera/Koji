@@ -56,11 +56,6 @@ impl MidiImpl of MidiTrait {
         panic(array!['not supported yet'])
     }
 
-    // Reverse notes by finding the last and first message times and applying 
-    // the following computation to every time value: (lastmsgtime - currenttime) + firstmsgtime
-    // Additionally, NoteOn msgs need to be swapped as NoteOffs and visa versa
-    // Note: Possible optimization?
-
     fn reverse_notes(self: @Midi) -> Midi {
         let mut ev = self.clone().events;
         let mut rev = self.clone().events.reverse().span();

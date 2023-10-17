@@ -1,8 +1,11 @@
 use orion::operators::tensor::{Tensor, U32Tensor,};
 use orion::numbers::i32;
 
-use koji::midi::types::{Midi, Message, Modes, ArpPattern, VelocityCurve, SetTempo};
-use koji::midi::instruments::{GeneralMidiInstrument};
+use koji::midi::types::{Midi, Message, Modes, ArpPattern, VelocityCurve, SetTempo, ControlChange};
+use koji::midi::instruments::{
+    GeneralMidiInstrument, instrument_name, instrument_to_program_change,
+    program_change_to_instrument, next_instrument_in_group
+};
 
 trait MidiTrait {
     /// =========== NOTE MANIPULATION ===========
@@ -97,7 +100,13 @@ impl MidiImpl of MidiTrait {
                             eventlist.append(*currentevent);
                         },
                         Message::CONTROL_CHANGE(ControlChange) => {
-                            eventlist.append(*currentevent);
+                            let outcc = ControlChange {
+                                channel: *ControlChange.channel,
+                                control: *ControlChange.control,
+                                value: next_instrument_in_group(*ControlChange.value),
+                                time: *ControlChange.time
+                            };
+                            eventlist.append(Message::CONTROL_CHANGE((outcc)));
                         },
                         Message::PITCH_WHEEL(PitchWheel) => {
                             eventlist.append(*currentevent);

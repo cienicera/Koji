@@ -8,6 +8,10 @@ use koji::midi::types::{
 use alexandria_data_structures::stack::{StackTrait, Felt252Stack, NullableStack};
 use alexandria_data_structures::array_ext::{ArrayTraitExt, SpanTraitExt};
 
+use koji::midi::instruments::{
+    GeneralMidiInstrument, instrument_name, instrument_to_program_change,
+    program_change_to_instrument, next_instrument_in_group
+};
 use koji::midi::time::round_to_nearest_nth;
 
 trait MidiTrait {
@@ -582,7 +586,60 @@ impl MidiImpl of MidiTrait {
     }
 
     fn remap_instruments(self: @Midi, chanel: u32) -> Midi {
-        panic(array!['not supported yet'])
+        // Create a clone of the MIDI events
+        let mut ev = self.clone().events;
+
+        // Create a new array to store the modified events
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        loop {
+            // Use pop_front to get the next event
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    // Process the current event
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::SET_TEMPO(SetTempo) => {
+                            // Create a new SetTempo message with the updated tempo
+                            eventlist.append(*currentevent);
+                        },
+                        Message::TIME_SIGNATURE(TimeSignature) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::CONTROL_CHANGE(ControlChange) => {
+                            let outcc = ControlChange {
+                                channel: *ControlChange.channel,
+                                control: *ControlChange.control,
+                                value: next_instrument_in_group(*ControlChange.value),
+                                time: *ControlChange.time
+                            };
+                            eventlist.append(Message::CONTROL_CHANGE((outcc)));
+                        },
+                        Message::PITCH_WHEEL(PitchWheel) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::AFTER_TOUCH(AfterTouch) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::POLY_TOUCH(PolyTouch) => {
+                            eventlist.append(*currentevent);
+                        },
+                    }
+                },
+                Option::None(_) => {
+                    // If there are no more events, break out of the loop
+                    break;
+                }
+            };
+        };
+
+        // Create a new Midi object with the modified event list
+        Midi { events: eventlist.span() }
     }
 
     fn get_bpm(self: @Midi) -> u32 {

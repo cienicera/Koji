@@ -18,8 +18,8 @@ trait MidiTrait {
     /// =========== NOTE MANIPULATION ===========
     /// Instantiate a Midi.
     fn new() -> Midi;
-    /// Set a message in a Midi object.
-    fn set_message(self: @Midi, msg: Message) -> Midi;
+    /// Append a message in a Midi object.
+    fn append_message(self: @Midi, msg: Message) -> Midi;
     /// Transpose notes by a given number of semitones.
     fn transpose_notes(self: @Midi, semitones: i32) -> Midi;
     ///  Reverse the order of notes.
@@ -53,8 +53,23 @@ impl MidiImpl of MidiTrait {
         Midi { events: array![].span() }
     }
 
-    fn set_message(self: @Midi, msg: Message) -> Midi {
-        panic(array!['not supported yet'])
+    fn append_message(self: @Midi, msg: Message) -> Midi {
+        let mut ev = *self.events;
+        let mut output = array![];
+
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    output.append(*currentevent);
+                },
+                Option::None(_) => {
+                    break;
+                },
+            };
+        };
+
+        output.append(msg);
+        Midi { events: output.span() }
     }
 
     fn transpose_notes(self: @Midi, semitones: i32) -> Midi {

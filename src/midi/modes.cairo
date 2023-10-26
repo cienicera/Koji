@@ -1,5 +1,5 @@
 use array::ArrayTrait;
-
+use koji::midi::types::Modes;
 //**********************************************************************************************************
 //  Mode & Key Definitions
 //
@@ -168,4 +168,21 @@ fn pentatonic_steps() -> Span<u8> {
     mode.append(3);
 
     mode.span()
+}
+
+fn mode_steps(mode: Modes) -> Span<u8> {
+    match mode {
+        Modes::Major => major_steps(),
+        Modes::Minor => minor_steps(),
+        Modes::Lydian => lydian_steps(),
+        Modes::Mixolydian => mixolydian_steps(),
+        Modes::Dorian => dorian_steps(),
+        Modes::Phrygian => phrygian_steps(),
+        Modes::Locrian => locrian_steps(),
+        Modes::Aeolian => aeolian_steps(),
+        Modes::Harmonicminor => harmonicminor_steps(),
+        Modes::Naturalminor => naturalminor_steps(),
+        Modes::Chromatic => chromatic_steps(),
+        Modes::Pentatonic => pentatonic_steps(),
+    }
 }

@@ -1,5 +1,9 @@
 use orion::numbers::{FP32x32, i32};
-
+use koji::midi::modes::{
+    major_steps, minor_steps, lydian_steps, mixolydian_steps, dorian_steps, phrygian_steps,
+    locrian_steps, aeolian_steps, harmonicminor_steps, naturalminor_steps, chromatic_steps,
+    pentatonic_steps
+};
 /// =========================================
 /// ================ MIDI ===================
 /// =========================================

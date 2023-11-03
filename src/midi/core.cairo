@@ -3,7 +3,7 @@ use orion::numbers::{i32, FP32x32};
 use core::option::OptionTrait;
 use koji::midi::types::{
     Midi, Message, Modes, ArpPattern, VelocityCurve, NoteOn, NoteOff, SetTempo, TimeSignature,
-    ControlChange, PitchWheel, AfterTouch, PolyTouch
+    ControlChange, PitchWheel, AfterTouch, PolyTouch, Direction, PitchClass
 };
 use alexandria_data_structures::stack::{StackTrait, Felt252Stack, NullableStack};
 use alexandria_data_structures::array_ext::{ArrayTraitExt, SpanTraitExt};
@@ -13,6 +13,8 @@ use koji::midi::instruments::{
     program_change_to_instrument, next_instrument_in_group
 };
 use koji::midi::time::round_to_nearest_nth;
+use koji::midi::modes::{mode_steps};
+use koji::midi::pitch::{PitchClassTrait, keynum_to_pc};
 
 trait MidiTrait {
     /// =========== NOTE MANIPULATION ===========
@@ -41,7 +43,7 @@ trait MidiTrait {
     /// Return statistics about notes (e.g., most frequent note, average note duration).
     /// =========== ADVANCED MANIPULATION ===========
     /// Add harmonies to existing melodies based on specified intervals.
-    fn generate_harmony(self: @Midi, modes: Modes) -> Midi;
+    fn generate_harmony(self: @Midi, steps: i32, tonic: PitchClass, modes: Modes) -> Midi;
     /// Convert chords into arpeggios based on a given pattern.
     fn arpeggiate_chords(self: @Midi, pattern: ArpPattern) -> Midi;
     /// Add or modify dynamics (velocity) of notes based on a specified curve or pattern.
@@ -687,8 +689,92 @@ impl MidiImpl of MidiTrait {
         outtempo
     }
 
-    fn generate_harmony(self: @Midi, modes: Modes) -> Midi {
-        panic(array!['not supported yet'])
+    fn generate_harmony(self: @Midi, steps: i32, tonic: PitchClass, modes: Modes) -> Midi {
+        let mut ev = self.clone().events;
+        let mut eventlist = ArrayTrait::<Message>::new();
+        let currentmode = mode_steps(modes);
+
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            let outnote = if steps.sign {
+                                keynum_to_pc(*NoteOn.note)
+                                    .modal_transposition(
+                                        tonic,
+                                        currentmode,
+                                        steps.mag.try_into().unwrap(),
+                                        Direction::Up(())
+                                    )
+                            } else {
+                                keynum_to_pc(*NoteOn.note)
+                                    .modal_transposition(
+                                        tonic,
+                                        currentmode,
+                                        steps.mag.try_into().unwrap(),
+                                        Direction::Down(())
+                                    )
+                            };
+
+                            let newnote = NoteOn {
+                                channel: *NoteOn.channel,
+                                note: outnote,
+                                velocity: *NoteOn.velocity,
+                                time: *NoteOn.time
+                            };
+
+                            let notemessage = Message::NOTE_ON((newnote));
+                            eventlist.append(notemessage);
+                            //include original note
+                            eventlist.append(*currentevent);
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            let outnote = if steps.sign {
+                                *NoteOff.note - steps.mag.try_into().unwrap()
+                            } else {
+                                *NoteOff.note + steps.mag.try_into().unwrap()
+                            };
+
+                            let newnote = NoteOff {
+                                channel: *NoteOff.channel,
+                                note: outnote,
+                                velocity: *NoteOff.velocity,
+                                time: *NoteOff.time
+                            };
+
+                            let notemessage = Message::NOTE_OFF((newnote));
+                            eventlist.append(notemessage);
+                            //include original note
+                            eventlist.append(*currentevent);
+                        },
+                        Message::SET_TEMPO(SetTempo) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::TIME_SIGNATURE(TimeSignature) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::CONTROL_CHANGE(ControlChange) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::PITCH_WHEEL(PitchWheel) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::AFTER_TOUCH(AfterTouch) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::POLY_TOUCH(PolyTouch) => {
+                            eventlist.append(*currentevent);
+                        },
+                    }
+                },
+                Option::None(_) => {
+                    break;
+                }
+            };
+        };
+
+        Midi { events: eventlist.span() }
     }
 
     fn arpeggiate_chords(self: @Midi, pattern: ArpPattern) -> Midi {

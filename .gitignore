@@ -6,3 +6,5 @@ target
 __pycache__
 
 .DS_Store
+
+Scarb.lock

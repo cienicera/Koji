@@ -1,0 +1,10 @@
+[tool.poetry]
+name = "koji"
+version = "0.1.0"
+description = "Represent MIDI onchain"
+authors = ["Casey Wescott, Raphael Doukhan, Niciera Labs"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+mido = "^1.3.2"

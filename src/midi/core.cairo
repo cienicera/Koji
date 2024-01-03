@@ -15,6 +15,7 @@ use koji::midi::instruments::{
 use koji::midi::time::round_to_nearest_nth;
 use koji::midi::modes::{mode_steps};
 use koji::midi::pitch::{PitchClassTrait, keynum_to_pc};
+use koji::midi::velocitycurve::{VelocityCurveTrait};
 
 trait MidiTrait {
     /// =========== NOTE MANIPULATION ===========
@@ -61,12 +62,8 @@ impl MidiImpl of MidiTrait {
 
         loop {
             match ev.pop_front() {
-                Option::Some(currentevent) => {
-                    output.append(*currentevent);
-                },
-                Option::None(_) => {
-                    break;
-                },
+                Option::Some(currentevent) => { output.append(*currentevent); },
+                Option::None(_) => { break; },
             };
         };
 
@@ -114,29 +111,19 @@ impl MidiImpl of MidiTrait {
                             let notemessage = Message::NOTE_OFF((newnote));
                             eventlist.append(notemessage);
                         },
-                        Message::SET_TEMPO(SetTempo) => {
-                            eventlist.append(*currentevent);
-                        },
+                        Message::SET_TEMPO(SetTempo) => { eventlist.append(*currentevent); },
                         Message::TIME_SIGNATURE(TimeSignature) => {
                             eventlist.append(*currentevent);
                         },
                         Message::CONTROL_CHANGE(ControlChange) => {
                             eventlist.append(*currentevent);
                         },
-                        Message::PITCH_WHEEL(PitchWheel) => {
-                            eventlist.append(*currentevent);
-                        },
-                        Message::AFTER_TOUCH(AfterTouch) => {
-                            eventlist.append(*currentevent);
-                        },
-                        Message::POLY_TOUCH(PolyTouch) => {
-                            eventlist.append(*currentevent);
-                        },
+                        Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent); },
+                        Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
+                        Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
                     }
                 },
-                Option::None(_) => {
-                    break;
-                }
+                Option::None(_) => { break; }
             };
         };
 
@@ -156,40 +143,24 @@ impl MidiImpl of MidiTrait {
         match lastmsgtime {
             Option::Some(currentev) => {
                 match currentev {
-                    Message::NOTE_ON(NoteOn) => {
-                        maxtime = *NoteOn.time;
-                    },
-                    Message::NOTE_OFF(NoteOff) => {
-                        maxtime = *NoteOff.time;
-                    },
+                    Message::NOTE_ON(NoteOn) => { maxtime = *NoteOn.time; },
+                    Message::NOTE_OFF(NoteOff) => { maxtime = *NoteOff.time; },
                     Message::SET_TEMPO(SetTempo) => {
                         match *SetTempo.time {
-                            Option::Some(time) => {
-                                maxtime = time;
-                            },
+                            Option::Some(time) => { maxtime = time; },
                             Option::None => {},
                         }
                     },
                     Message::TIME_SIGNATURE(TimeSignature) => {
                         match *TimeSignature.time {
-                            Option::Some(time) => {
-                                maxtime = time;
-                            },
+                            Option::Some(time) => { maxtime = time; },
                             Option::None => {},
                         }
                     },
-                    Message::CONTROL_CHANGE(ControlChange) => {
-                        maxtime = *ControlChange.time;
-                    },
-                    Message::PITCH_WHEEL(PitchWheel) => {
-                        maxtime = *PitchWheel.time;
-                    },
-                    Message::AFTER_TOUCH(AfterTouch) => {
-                        maxtime = *AfterTouch.time;
-                    },
-                    Message::POLY_TOUCH(PolyTouch) => {
-                        maxtime = *PolyTouch.time;
-                    },
+                    Message::CONTROL_CHANGE(ControlChange) => { maxtime = *ControlChange.time; },
+                    Message::PITCH_WHEEL(PitchWheel) => { maxtime = *PitchWheel.time; },
+                    Message::AFTER_TOUCH(AfterTouch) => { maxtime = *AfterTouch.time; },
+                    Message::POLY_TOUCH(PolyTouch) => { maxtime = *PolyTouch.time; },
                 }
             },
             Option::None(_) => {}
@@ -199,40 +170,24 @@ impl MidiImpl of MidiTrait {
         match firstmsgtime {
             Option::Some(currentev) => {
                 match currentev {
-                    Message::NOTE_ON(NoteOn) => {
-                        mintime = *NoteOn.time;
-                    },
-                    Message::NOTE_OFF(NoteOff) => {
-                        mintime = *NoteOff.time;
-                    },
+                    Message::NOTE_ON(NoteOn) => { mintime = *NoteOn.time; },
+                    Message::NOTE_OFF(NoteOff) => { mintime = *NoteOff.time; },
                     Message::SET_TEMPO(SetTempo) => {
                         match *SetTempo.time {
-                            Option::Some(time) => {
-                                mintime = time;
-                            },
+                            Option::Some(time) => { mintime = time; },
                             Option::None => {},
                         }
                     },
                     Message::TIME_SIGNATURE(TimeSignature) => {
                         match *TimeSignature.time {
-                            Option::Some(time) => {
-                                mintime = time;
-                            },
+                            Option::Some(time) => { mintime = time; },
                             Option::None => {},
                         }
                     },
-                    Message::CONTROL_CHANGE(ControlChange) => {
-                        mintime = *ControlChange.time;
-                    },
-                    Message::PITCH_WHEEL(PitchWheel) => {
-                        mintime = *PitchWheel.time;
-                    },
-                    Message::AFTER_TOUCH(AfterTouch) => {
-                        mintime = *AfterTouch.time;
-                    },
-                    Message::POLY_TOUCH(PolyTouch) => {
-                        mintime = *PolyTouch.time;
-                    },
+                    Message::CONTROL_CHANGE(ControlChange) => { mintime = *ControlChange.time; },
+                    Message::PITCH_WHEEL(PitchWheel) => { mintime = *PitchWheel.time; },
+                    Message::AFTER_TOUCH(AfterTouch) => { mintime = *AfterTouch.time; },
+                    Message::POLY_TOUCH(PolyTouch) => { mintime = *PolyTouch.time; },
                 }
             },
             Option::None(_) => {}
@@ -326,9 +281,7 @@ impl MidiImpl of MidiTrait {
                         },
                     }
                 },
-                Option::None(_) => {
-                    break;
-                }
+                Option::None(_) => { break; }
             };
         };
 
@@ -363,29 +316,19 @@ impl MidiImpl of MidiTrait {
                             let notemessage = Message::NOTE_OFF((newnote));
                             eventlist.append(notemessage);
                         },
-                        Message::SET_TEMPO(SetTempo) => {
-                            eventlist.append(*currentevent)
-                        },
+                        Message::SET_TEMPO(SetTempo) => { eventlist.append(*currentevent) },
                         Message::TIME_SIGNATURE(TimeSignature) => {
                             eventlist.append(*currentevent)
                         },
                         Message::CONTROL_CHANGE(ControlChange) => {
                             eventlist.append(*currentevent)
                         },
-                        Message::PITCH_WHEEL(PitchWheel) => {
-                            eventlist.append(*currentevent)
-                        },
-                        Message::AFTER_TOUCH(AfterTouch) => {
-                            eventlist.append(*currentevent)
-                        },
-                        Message::POLY_TOUCH(PolyTouch) => {
-                            eventlist.append(*currentevent)
-                        },
+                        Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent) },
+                        Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent) },
+                        Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent) },
                     }
                 },
-                Option::None(_) => {
-                    break;
-                }
+                Option::None(_) => { break; }
             };
         };
 
@@ -435,9 +378,7 @@ impl MidiImpl of MidiTrait {
                         Message::POLY_TOUCH(PolyTouch) => {},
                     }
                 },
-                Option::None(_) => {
-                    break;
-                }
+                Option::None(_) => { break; }
             };
         };
 
@@ -539,9 +480,7 @@ impl MidiImpl of MidiTrait {
                         },
                     }
                 },
-                Option::None(_) => {
-                    break;
-                }
+                Option::None(_) => { break; }
             };
         };
 
@@ -562,12 +501,8 @@ impl MidiImpl of MidiTrait {
                 Option::Some(currentevent) => {
                     // Process the current event
                     match currentevent {
-                        Message::NOTE_ON(NoteOn) => {
-                            eventlist.append(*currentevent);
-                        },
-                        Message::NOTE_OFF(NoteOff) => {
-                            eventlist.append(*currentevent);
-                        },
+                        Message::NOTE_ON(NoteOn) => { eventlist.append(*currentevent); },
+                        Message::NOTE_OFF(NoteOff) => { eventlist.append(*currentevent); },
                         Message::SET_TEMPO(SetTempo) => {
                             // Create a new SetTempo message with the updated tempo
                             let tempo = SetTempo { tempo: new_tempo, time: *SetTempo.time };
@@ -580,15 +515,9 @@ impl MidiImpl of MidiTrait {
                         Message::CONTROL_CHANGE(ControlChange) => {
                             eventlist.append(*currentevent);
                         },
-                        Message::PITCH_WHEEL(PitchWheel) => {
-                            eventlist.append(*currentevent);
-                        },
-                        Message::AFTER_TOUCH(AfterTouch) => {
-                            eventlist.append(*currentevent);
-                        },
-                        Message::POLY_TOUCH(PolyTouch) => {
-                            eventlist.append(*currentevent);
-                        },
+                        Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent); },
+                        Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
+                        Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
                     }
                 },
                 Option::None(_) => {
@@ -615,12 +544,8 @@ impl MidiImpl of MidiTrait {
                 Option::Some(currentevent) => {
                     // Process the current event
                     match currentevent {
-                        Message::NOTE_ON(NoteOn) => {
-                            eventlist.append(*currentevent);
-                        },
-                        Message::NOTE_OFF(NoteOff) => {
-                            eventlist.append(*currentevent);
-                        },
+                        Message::NOTE_ON(NoteOn) => { eventlist.append(*currentevent); },
+                        Message::NOTE_OFF(NoteOff) => { eventlist.append(*currentevent); },
                         Message::SET_TEMPO(SetTempo) => {
                             // Create a new SetTempo message with the updated tempo
                             eventlist.append(*currentevent);
@@ -637,15 +562,9 @@ impl MidiImpl of MidiTrait {
                             };
                             eventlist.append(Message::CONTROL_CHANGE((outcc)));
                         },
-                        Message::PITCH_WHEEL(PitchWheel) => {
-                            eventlist.append(*currentevent);
-                        },
-                        Message::AFTER_TOUCH(AfterTouch) => {
-                            eventlist.append(*currentevent);
-                        },
-                        Message::POLY_TOUCH(PolyTouch) => {
-                            eventlist.append(*currentevent);
-                        },
+                        Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent); },
+                        Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
+                        Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
                     }
                 },
                 Option::None(_) => {
@@ -670,9 +589,7 @@ impl MidiImpl of MidiTrait {
                     match currentevent {
                         Message::NOTE_ON(NoteOn) => {},
                         Message::NOTE_OFF(NoteOff) => {},
-                        Message::SET_TEMPO(SetTempo) => {
-                            outtempo = *SetTempo.tempo;
-                        },
+                        Message::SET_TEMPO(SetTempo) => { outtempo = *SetTempo.tempo; },
                         Message::TIME_SIGNATURE(TimeSignature) => {},
                         Message::CONTROL_CHANGE(ControlChange) => {},
                         Message::PITCH_WHEEL(PitchWheel) => {},
@@ -680,9 +597,7 @@ impl MidiImpl of MidiTrait {
                         Message::POLY_TOUCH(PolyTouch) => {},
                     }
                 },
-                Option::None(_) => {
-                    break;
-                }
+                Option::None(_) => { break; }
             };
         };
 
@@ -748,29 +663,19 @@ impl MidiImpl of MidiTrait {
                             //include original note
                             eventlist.append(*currentevent);
                         },
-                        Message::SET_TEMPO(SetTempo) => {
-                            eventlist.append(*currentevent);
-                        },
+                        Message::SET_TEMPO(SetTempo) => { eventlist.append(*currentevent); },
                         Message::TIME_SIGNATURE(TimeSignature) => {
                             eventlist.append(*currentevent);
                         },
                         Message::CONTROL_CHANGE(ControlChange) => {
                             eventlist.append(*currentevent);
                         },
-                        Message::PITCH_WHEEL(PitchWheel) => {
-                            eventlist.append(*currentevent);
-                        },
-                        Message::AFTER_TOUCH(AfterTouch) => {
-                            eventlist.append(*currentevent);
-                        },
-                        Message::POLY_TOUCH(PolyTouch) => {
-                            eventlist.append(*currentevent);
-                        },
+                        Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent); },
+                        Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
+                        Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
                     }
                 },
-                Option::None(_) => {
-                    break;
-                }
+                Option::None(_) => { break; }
             };
         };
 
@@ -782,6 +687,60 @@ impl MidiImpl of MidiTrait {
     }
 
     fn edit_dynamics(self: @Midi, curve: VelocityCurve) -> Midi {
-        panic(array!['not supported yet'])
+        let mut ev = self.clone().events;
+        let mut vcurve = curve.clone();
+        let mut outvelocity = 0;
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            match vcurve.getlevelattime(*NoteOn.time) {
+                                Option::Some(val) => { outvelocity = val; },
+                                Option::None => { outvelocity = *NoteOn.velocity; }
+                            }
+
+                            let newnote = NoteOn {
+                                channel: *NoteOn.channel,
+                                note: *NoteOn.note,
+                                velocity: outvelocity,
+                                time: *NoteOn.time
+                            };
+                            let notemessage = Message::NOTE_ON((newnote));
+                            eventlist.append(notemessage);
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            match vcurve.getlevelattime(*NoteOff.time) {
+                                Option::Some(val) => { outvelocity = val; },
+                                Option::None => { outvelocity = *NoteOff.velocity; }
+                            }
+                            let newnote = NoteOff {
+                                channel: *NoteOff.channel,
+                                note: *NoteOff.note,
+                                velocity: outvelocity,
+                                time: *NoteOff.time
+                            };
+                            let notemessage = Message::NOTE_OFF((newnote));
+                            eventlist.append(notemessage);
+                        },
+                        Message::SET_TEMPO(SetTempo) => { eventlist.append(*currentevent); },
+                        Message::TIME_SIGNATURE(TimeSignature) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::CONTROL_CHANGE(ControlChange) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent); },
+                        Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
+                        Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
+                    }
+                },
+                Option::None(_) => { break; }
+            };
+        };
+
+        Midi { events: eventlist.span() }
     }
 }

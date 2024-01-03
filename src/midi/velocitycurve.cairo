@@ -13,6 +13,10 @@ trait VelocityCurveTrait {
     /// Append a breakpoint time/value pair in a VelocityCurve object.
     fn set_breakpoint_pair(self: @VelocityCurve, time: FP32x32, value: u8) -> VelocityCurve;
     /// =========== GLOBAL MANIPULATION ===========
+    /// Stretch or shrink time values by a specified factor.
+    fn scale_times(self: @VelocityCurve, factor: FP32x32) -> VelocityCurve;
+    /// Add or subtract to time values by a specified offset.
+    fn offset_times(self: @VelocityCurve, factor: FP32x32) -> VelocityCurve;
     /// Stretch or shrink levels by a specified factor.
     fn scale_levels(self: @VelocityCurve, factor: u8) -> VelocityCurve;
     /// Add or subtract to levels by a specified offset.
@@ -54,6 +58,52 @@ impl VelocityCurveImpl of VelocityCurveTrait {
                     vclevels.append(value);
                     break;
                 }
+            };
+        };
+
+        VelocityCurve { times: vctimes.span(), levels: vclevels.span() }
+    }
+    fn offset_times(self: @VelocityCurve, factor: FP32x32) -> VelocityCurve {
+        let mut vct = self.clone().times;
+        let mut vcl = self.clone().levels;
+
+        let mut vctimes = ArrayTrait::<FP32x32>::new();
+        let mut vclevels = ArrayTrait::<u8>::new();
+
+        loop {
+            match vct.pop_front() {
+                Option::Some(currtime) => { vctimes.append(*currtime + factor); },
+                Option::None(_) => { break; }
+            };
+        };
+
+        loop {
+            match vcl.pop_front() {
+                Option::Some(currlevels) => { vclevels.append(*currlevels); },
+                Option::None(_) => { break; }
+            };
+        };
+
+        VelocityCurve { times: vctimes.span(), levels: vclevels.span() }
+    }
+    fn scale_times(self: @VelocityCurve, factor: FP32x32) -> VelocityCurve {
+        let mut vct = self.clone().times;
+        let mut vcl = self.clone().levels;
+
+        let mut vctimes = ArrayTrait::<FP32x32>::new();
+        let mut vclevels = ArrayTrait::<u8>::new();
+
+        loop {
+            match vct.pop_front() {
+                Option::Some(currtime) => { vctimes.append(*currtime * factor); },
+                Option::None(_) => { break; }
+            };
+        };
+
+        loop {
+            match vcl.pop_front() {
+                Option::Some(currlevels) => { vclevels.append(*currlevels); },
+                Option::None(_) => { break; }
             };
         };
 

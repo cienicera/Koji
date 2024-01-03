@@ -6,6 +6,191 @@ use koji::midi::types::{
     ControlChange, PitchWheel, AfterTouch, PolyTouch, Direction, PitchClass
 };
 
+trait VelocityCurveTrait {
+    /// =========== VelocityCurve MANIPULATION ===========
+    /// Instantiate a VelocityCurve.
+    fn new() -> VelocityCurve;
+    /// Append a breakpoint time/value pair in a VelocityCurve object.
+    fn set_breakpoint_pair(self: @VelocityCurve, time: FP32x32, value: u8) -> VelocityCurve;
+    /// =========== GLOBAL MANIPULATION ===========
+    /// Stretch or shrink levels by a specified factor.
+    fn scale_levels(self: @VelocityCurve, factor: u8) -> VelocityCurve;
+    /// Add or subtract to levels by a specified offset.
+    fn offset_levels(self: @VelocityCurve, factor: u8) -> VelocityCurve;
+    /// =========== ANALYSIS ===========
+    /// Get the last time value for the breakpoint
+    fn lasttime(self: @VelocityCurve) -> FP32x32;
+    /// Get the maximum levels for the breakpoint
+    fn maxlevel(self: @VelocityCurve) -> u8;
+    /// Get the linearly interpolated at a specified time index
+    fn getlevelattime(self: @VelocityCurve, timeindex: FP32x32) -> Option<u8>;
+}
+
+impl VelocityCurveImpl of VelocityCurveTrait {
+    fn new() -> VelocityCurve {
+        VelocityCurve { times: array![].span(), levels: array![].span() }
+    }
+    fn set_breakpoint_pair(self: @VelocityCurve, time: FP32x32, value: u8) -> VelocityCurve {
+        let mut vct = self.clone().times;
+        let mut vcl = self.clone().levels;
+
+        let mut vctimes = ArrayTrait::<FP32x32>::new();
+        let mut vclevels = ArrayTrait::<u8>::new();
+
+        loop {
+            match vct.pop_front() {
+                Option::Some(currtime) => { vctimes.append(*currtime); },
+                Option::None(_) => {
+                    vctimes.append(time);
+                    break;
+                }
+            };
+        };
+
+        loop {
+            match vcl.pop_front() {
+                Option::Some(currlevels) => { vclevels.append(*currlevels); },
+                Option::None(_) => {
+                    vclevels.append(value);
+                    break;
+                }
+            };
+        };
+
+        VelocityCurve { times: vctimes.span(), levels: vclevels.span() }
+    }
+    fn scale_levels(self: @VelocityCurve, factor: u8) -> VelocityCurve {
+        let mut vct = self.clone().times;
+        let mut vcl = self.clone().levels;
+
+        let mut vctimes = ArrayTrait::<FP32x32>::new();
+        let mut vclevels = ArrayTrait::<u8>::new();
+
+        loop {
+            match vct.pop_front() {
+                Option::Some(currtime) => { vctimes.append(*currtime); },
+                Option::None(_) => { break; }
+            };
+        };
+
+        loop {
+            match vcl.pop_front() {
+                Option::Some(currlevels) => { vclevels.append(*currlevels * factor); },
+                Option::None(_) => { break; }
+            };
+        };
+
+        VelocityCurve { times: vctimes.span(), levels: vclevels.span() }
+    }
+    fn offset_levels(self: @VelocityCurve, factor: u8) -> VelocityCurve {
+        let mut vct = self.clone().times;
+        let mut vcl = self.clone().levels;
+
+        let mut vctimes = ArrayTrait::<FP32x32>::new();
+        let mut vclevels = ArrayTrait::<u8>::new();
+
+        loop {
+            match vct.pop_front() {
+                Option::Some(currtime) => { vctimes.append(*currtime); },
+                Option::None(_) => { break; }
+            };
+        };
+
+        loop {
+            match vcl.pop_front() {
+                Option::Some(currlevels) => { vclevels.append(*currlevels + factor); },
+                Option::None(_) => { break; }
+            };
+        };
+
+        VelocityCurve { times: vctimes.span(), levels: vclevels.span() }
+    }
+    fn lasttime(self: @VelocityCurve) -> FP32x32 {
+        let mut lasttime = FP32x32 { mag: 0, sign: false };
+        let mut vct = self.clone().times;
+        let mut vcl = self.clone().levels;
+
+        let mut vctimes = ArrayTrait::<u8>::new();
+        let mut vcvalues = ArrayTrait::<u8>::new();
+
+        loop {
+            match vct.pop_front() {
+                Option::Some(currtime) => { let mut lasttime = *currtime; },
+                Option::None(_) => { break; }
+            };
+        };
+        lasttime
+    }
+    fn maxlevel(self: @VelocityCurve) -> u8 {
+        let mut maxlevel = 0;
+        let mut vct = self.clone().times;
+        let mut vcl = self.clone().levels;
+
+        let mut vctimes = ArrayTrait::<u8>::new();
+        let mut vcvalues = ArrayTrait::<u8>::new();
+
+        loop {
+            match vcl.pop_front() {
+                Option::Some(currlevels) => {
+                    let outnote = if (*currlevels > maxlevel) {
+                        maxlevel = *currlevels;
+                    };
+                },
+                Option::None(_) => { break; }
+            };
+        };
+        maxlevel
+    }
+    fn getlevelattime(self: @VelocityCurve, timeindex: FP32x32) -> Option<u8> {
+        let mut vct = self.clone().times;
+        let mut vcl = self.clone().levels;
+        let mut interpolatedlevel = Option::None;
+        let mut x1 = FP32x32 { mag: 0, sign: false };
+        let mut x2 = FP32x32 { mag: 0, sign: false };
+        let mut y1 = Option::None;
+        let mut y2 = Option::None;
+        let mut y1val = 0;
+        let mut y2val = 0;
+        loop {
+            if (x2 < timeindex) {
+                match vct.pop_front() {
+                    Option::Some(currtime) => {
+                        x1 = x2;
+                        x2 = *currtime;
+                    },
+                    Option::None(_) => {}
+                };
+                match vcl.pop_front() {
+                    Option::Some(currlevel) => {
+                        y1 = Option::Some(y2);
+                        y2 = Option::Some(*currlevel);
+                    },
+                    Option::None(_) => {}
+                };
+            } else {
+                if (y1 == Option::None) {
+                    break;
+                } else if (y2 == Option::None) {
+                    break;
+                } else {
+                    match y1 {
+                        Option::Some(val) => { let y1val = val; },
+                        Option::None(_) => {}
+                    }
+                    match y2 {
+                        Option::Some(val) => { let y2val = val; },
+                        Option::None(_) => {}
+                    }
+
+                    interpolatedlevel = vc_linear_interpolation(x1, y1val, x2, y2val, timeindex);
+                    break;
+                };
+            }
+        };
+        interpolatedlevel
+    }
+}
+
 fn linear_interpolation(
     x1: FP32x32, y1: FP32x32, x2: FP32x32, y2: FP32x32, xindex: FP32x32
 ) -> Option<FP32x32> {

@@ -115,8 +115,12 @@ enum Modes {
 #[derive(Copy, Drop)]
 enum ArpPattern {} //TODO
 
+// VelocityCurve represents time & level "breakpoint" pairs indexed:
 #[derive(Copy, Drop)]
-struct VelocityCurve {} // TODO
+struct VelocityCurve {
+    times: Span<FP32x32>,
+    levels: Span<u8>
+}
 
 /// =========================================
 /// ============== PitchClass ===============

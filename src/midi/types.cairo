@@ -113,7 +113,14 @@ enum Modes {
 }
 
 #[derive(Copy, Drop)]
-enum ArpPattern {} //TODO
+enum ArpPattern {
+    Up: (),
+    Down: (),
+    UpDown: (),
+    DownUp: (),
+    Random: (),
+    Custom: ()
+}
 
 #[derive(Copy, Drop)]
 struct VelocityCurve {} // TODO

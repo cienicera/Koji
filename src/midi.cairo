@@ -4,3 +4,4 @@ mod instruments;
 mod time;
 mod modes;
 mod pitch;
+mod velocitycurve;

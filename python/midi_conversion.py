@@ -1,8 +1,8 @@
 import mido
 import json
+import re
 
-import mido
-
+from mido import MidiFile, MidiTrack, Message
 
 def midi_to_cairo_struct(midi_file, output_file):
     mid = mido.MidiFile(midi_file)
@@ -47,6 +47,43 @@ def midi_to_cairo_struct(midi_file, output_file):
     with open(output_file, 'w') as file:
         file.write(full_cairo_code)
 
+def cairo_struct_to_midi(cairo_file, output_file):
+    with open(cairo_file, 'r') as file:
+        cairo_data = file.read()
+
+    # Regex patterns to match different MIDI event types in the Cairo data
+    note_on_pattern = re.compile(r"Message::NOTE_ON\(NoteOn \{ channel: (\d+), note: (\d+), velocity: (\d+), time: (.+?) \}\)")
+    note_off_pattern = re.compile(r"Message::NOTE_OFF\(NoteOff \{ channel: (\d+), note: (\d+), velocity: (\d+), time: (.+?) \}\)")
+    set_tempo_pattern = re.compile(r"Message::SET_TEMPO\(SetTempo \{ tempo: (.+?), time: (.+?) \}\)")
+    time_signature_pattern = re.compile(r"Message::TIME_SIGNATURE\(TimeSignature \{ numerator: (\d+), denominator: (\d+), clocks_per_click: (\d+), time: None \}\)")
+
+    mid = MidiFile()
+    track = MidiTrack()
+    mid.tracks.append(track)
+
+    for match in note_on_pattern.finditer(cairo_data):
+        channel, note, velocity, time = match.groups()
+        time = parse_fp32x32(time)
+        track.append(Message('note_on', note=int(note), velocity=int(velocity), time=time, channel=int(channel)))
+
+    for match in note_off_pattern.finditer(cairo_data):
+        channel, note, velocity, time = match.groups()
+        time = parse(time)
+        track.append(Message('note_off', note=int(note), velocity=int(velocity), time=time, channel=int(channel)))
+
+    for match in set_tempo_pattern.finditer(cairo_data):
+        tempo, _ = match.groups()
+        # Assume the tempo is directly usable or convert it as necessary
+        tempo = parse_fp32x32(tempo)  # This may need adjustment based on your tempo representation
+        track.append(mido.MetaMessage('set_tempo', tempo=tempo, time=0))
+
+    for match in time_signature_pattern.finditer(cairo_data):
+        numerator, denominator, clocks_per_click = match.groups()
+        # Assuming `mido` accepts time signature as integers directly
+        # track.append(mido.MetaMessage('time_signature', numerator=int(numerator), denominator=int(denominator), clocks_per_metronome_click=int(clocks_per_click), thirty_seconds_per_24_clocks=8, time=0))
+        track.append(mido.MetaMessage('time_signature', numerator=int(numerator), denominator=int(denominator), clocks_per_click=int(clocks_per_click), notated_32nd_notes_per_beat=8, time=0))
+
+    mid.save(output_file)
 
 def midi_to_json(midi_file, output_file):
     mid = mido.MidiFile(midi_file)
@@ -92,3 +129,15 @@ def midi_to_json(midi_file, output_file):
 
 def format_fp32x32(time):
     return f"FP32x32 {{ mag: {time}, sign: false }}"
+
+# Helper function to parse FP32x32 formatted string (needed for time, tempo, etc.)
+def parse_fp32x32(fp32x32_str):
+    # Extract the magnitude part from the FP32x32 formatted string
+    mag_match = re.search(r"mag: (\d+)", fp32x32_str)
+    if mag_match:
+        mag = int(mag_match.group(1))
+        # Assuming the magnitude directly represents the value we want
+        return mag
+    else:
+        # Return a default value if parsing fails
+        return 0

@@ -129,7 +129,7 @@ fn get_notes_of_key(pc: PitchClass, pcoll: Span<u8>) -> Span<u8> {
     let mut pcollection = pcoll.clone();
 
     let mut sum = pc.note;
-    let mut i = 0;
+    let mut _i = 0;
 
     outarr.append(sum);
 
@@ -155,7 +155,7 @@ fn get_notes_of_key(pc: PitchClass, pcoll: Span<u8>) -> Span<u8> {
 fn get_scale_degree(pc: PitchClass, tonic: PitchClass, pcoll: Span<u8>) -> u8 {
     let mut notesofkey = tonic.get_notes_of_key(pcoll.snapshot.clone().span());
     let notesofkeylen = notesofkey.len();
-    let mut i = 0;
+    let mut _i = 0;
     let mut outdegree = 0;
 
     loop {

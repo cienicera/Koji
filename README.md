@@ -5,11 +5,17 @@ Autonomous Music library based on previous [work](https://github.com/caseywescot
 # Midi Conversion
 Convert Midi to JSON format:
 ```bash
-make convert-json MIDI_FILE="path/to/midi/file.mid" OUTPUT_FILE="path/to/output"
+make convert-json INPUT_FILE="path/to/midi/file.mid" OUTPUT_FILE="path/to/output"
 ```
 
 Convert to Cairo format:
 
 ```bash
-make convert-cairo MIDI_FILE="path/to/midi/file.mid" OUTPUT_FILE="path/to/output"
+make convert-cairo INPUT_FILE="path/to/midi/file.mid" OUTPUT_FILE="path/to/output"
+```
+
+Convert to Midi format:
+
+```bash
+make convert-to-midi INPUT_FILE="path/to/cairo/file.cairo" OUTPUT_FILE="path/to/output"
 ```

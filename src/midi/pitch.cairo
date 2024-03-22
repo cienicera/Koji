@@ -62,6 +62,27 @@ fn pc_to_keynum(pc: PitchClass) -> u8 {
     pc.note + (OCTAVEBASE * (pc.octave + 1))
 }
 
+// Converts a PitchClass to a Frequency: freq = 440.0 * (2 ** ((keynum - 69) / 12.0))
+
+fn freq(pc: PitchClass) -> u32 {
+    let keynum = pc.keynum();
+    let a = FP32x32 { mag: 440, sign: false };
+    let numsemitones = FP32x32 { mag: 12, sign: false };
+
+    let mut keynumscale = FP32x32 { mag: 0, sign: true };
+    if (keynum > 69) {
+        keynumscale = FP32x32 { mag: (keynum - 69).into(), sign: false };
+    } else {
+        keynumscale =
+            FP32x32 {
+                mag: (69 - keynum).into(), sign: false
+            }; // currently not allowing negative values
+    };
+    let keynumscaleratio = keynumscale / numsemitones;
+    let freq = a * keynumscaleratio.exp2();
+    freq.mag.try_into().unwrap()
+}
+
 // Converts a MIDI keynum to a PitchClass 
 fn keynum_to_pc(keynum: u8) -> PitchClass {
     let mut outnote = keynum % OCTAVEBASE;

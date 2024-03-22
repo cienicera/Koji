@@ -10,6 +10,9 @@ use debug::PrintTrait;
 use koji::midi::types::{Modes, PitchClass, OCTAVEBASE, Direction, Quality};
 use koji::midi::modes::{mode_steps};
 
+use orion::numbers::{i32, FP32x32, FP32x32Impl, FixedTrait};
+
+
 //*****************************************************************************************************************
 // PitchClass and Note Utils 
 //
@@ -25,6 +28,7 @@ use koji::midi::modes::{mode_steps};
 
 trait PitchClassTrait {
     fn keynum(self: @PitchClass) -> u8;
+    fn freq(self: @PitchClass) -> u32;
     fn abs_diff_between_pc(self: @PitchClass, pc2: PitchClass) -> u8;
     fn mode_notes_above_note_base(self: @PitchClass, pcoll: Span<u8>) -> Span<u8>;
     fn get_notes_of_key(self: @PitchClass, pcoll: Span<u8>) -> Span<u8>;
@@ -37,6 +41,9 @@ trait PitchClassTrait {
 impl PitchClassImpl of PitchClassTrait {
     fn keynum(self: @PitchClass) -> u8 {
         pc_to_keynum(*self)
+    }
+    fn freq(self: @PitchClass) -> u32 {
+        freq(*self)
     }
     fn abs_diff_between_pc(self: @PitchClass, pc2: PitchClass) -> u8 {
         abs_diff_between_pc(*self, pc2)
@@ -60,6 +67,27 @@ impl PitchClassImpl of PitchClassTrait {
 // Converts a PitchClass to a MIDI keynum
 fn pc_to_keynum(pc: PitchClass) -> u8 {
     pc.note + (OCTAVEBASE * (pc.octave + 1))
+}
+
+// Converts a PitchClass to a Frequency: freq = 440.0 * (2 ** ((keynum - 69) / 12.0))
+
+fn freq(pc: PitchClass) -> u32 {
+    let keynum = pc.keynum();
+    let a = FP32x32 { mag: 440, sign: false };
+    let numsemitones = FP32x32 { mag: 12, sign: false };
+
+    let mut keynumscale = FP32x32 { mag: 0, sign: true };
+    if (keynum > 69) {
+        keynumscale = FP32x32 { mag: (keynum - 69).into(), sign: false };
+    } else {
+        keynumscale =
+            FP32x32 {
+                mag: (69 - keynum).into(), sign: false
+            }; // currently not allowing negative values
+    };
+    let keynumscaleratio = keynumscale / numsemitones;
+    let freq = a * keynumscaleratio.exp2();
+    freq.mag.try_into().unwrap()
 }
 
 // Converts a MIDI keynum to a PitchClass 

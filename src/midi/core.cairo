@@ -3,7 +3,7 @@ use orion::numbers::{i32, FP32x32};
 use core::option::OptionTrait;
 use koji::midi::types::{
     Midi, Message, Modes, ArpPattern, VelocityCurve, NoteOn, NoteOff, SetTempo, TimeSignature,
-    ControlChange, PitchWheel, AfterTouch, PolyTouch, Direction, PitchClass
+    ControlChange, PitchWheel, AfterTouch, PolyTouch, Direction, PitchClass, ProgramChange,
 };
 use alexandria_data_structures::stack::{StackTrait, Felt252Stack, NullableStack};
 use alexandria_data_structures::array_ext::{ArrayTraitExt, SpanTraitExt};
@@ -121,6 +121,9 @@ impl MidiImpl of MidiTrait {
                         Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent); },
                         Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
                         Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
+                        Message::PROGRAM_CHANGE(ProgramChange) => {
+                            eventlist.append(*currentevent);
+                        },
                     }
                 },
                 Option::None(_) => { break; }
@@ -161,6 +164,7 @@ impl MidiImpl of MidiTrait {
                     Message::PITCH_WHEEL(PitchWheel) => { maxtime = *PitchWheel.time; },
                     Message::AFTER_TOUCH(AfterTouch) => { maxtime = *AfterTouch.time; },
                     Message::POLY_TOUCH(PolyTouch) => { maxtime = *PolyTouch.time; },
+                    Message::PROGRAM_CHANGE(ProgramChange) => { maxtime = *ProgramChange.time; },
                 }
             },
             Option::None(_) => {}
@@ -188,6 +192,7 @@ impl MidiImpl of MidiTrait {
                     Message::PITCH_WHEEL(PitchWheel) => { mintime = *PitchWheel.time; },
                     Message::AFTER_TOUCH(AfterTouch) => { mintime = *AfterTouch.time; },
                     Message::POLY_TOUCH(PolyTouch) => { mintime = *PolyTouch.time; },
+                    Message::PROGRAM_CHANGE(ProgramChange) => { mintime = *ProgramChange.time; },
                 }
             },
             Option::None(_) => {}
@@ -279,6 +284,15 @@ impl MidiImpl of MidiTrait {
                             let ptmessage = Message::POLY_TOUCH((newpolytouch));
                             eventlist.append(ptmessage);
                         },
+                        Message::PROGRAM_CHANGE(ProgramChange) => {
+                            let newprogchg = ProgramChange {
+                                channel: *ProgramChange.channel,
+                                program: *ProgramChange.program,
+                                time: (maxtime - *ProgramChange.time) + mintime
+                            };
+                            let pchgmessage = Message::PROGRAM_CHANGE((newprogchg));
+                            eventlist.append(pchgmessage);
+                        },
                     }
                 },
                 Option::None(_) => { break; }
@@ -326,6 +340,9 @@ impl MidiImpl of MidiTrait {
                         Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent) },
                         Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent) },
                         Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent) },
+                        Message::PROGRAM_CHANGE(ProgramChange) => {
+                            eventlist.append(*currentevent)
+                        },
                     }
                 },
                 Option::None(_) => { break; }
@@ -376,6 +393,7 @@ impl MidiImpl of MidiTrait {
                         Message::PITCH_WHEEL(PitchWheel) => {},
                         Message::AFTER_TOUCH(AfterTouch) => {},
                         Message::POLY_TOUCH(PolyTouch) => {},
+                        Message::PROGRAM_CHANGE(ProgramChange) => {},
                     }
                 },
                 Option::None(_) => { break; }
@@ -478,6 +496,15 @@ impl MidiImpl of MidiTrait {
                             let ptmessage = Message::POLY_TOUCH((newpolytouch));
                             eventlist.append(ptmessage);
                         },
+                        Message::PROGRAM_CHANGE(ProgramChange) => {
+                            let newprogchg = ProgramChange {
+                                channel: *ProgramChange.channel,
+                                program: *ProgramChange.program,
+                                time: *ProgramChange.time * newfactor
+                            };
+                            let pchgmessage = Message::PROGRAM_CHANGE((newprogchg));
+                            eventlist.append(pchgmessage);
+                        },
                     }
                 },
                 Option::None(_) => { break; }
@@ -518,6 +545,9 @@ impl MidiImpl of MidiTrait {
                         Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent); },
                         Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
                         Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
+                        Message::PROGRAM_CHANGE(ProgramChange) => {
+                            eventlist.append(*currentevent);
+                        },
                     }
                 },
                 Option::None(_) => {
@@ -565,6 +595,9 @@ impl MidiImpl of MidiTrait {
                         Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent); },
                         Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
                         Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
+                        Message::PROGRAM_CHANGE(ProgramChange) => {
+                            eventlist.append(*currentevent);
+                        },
                     }
                 },
                 Option::None(_) => {
@@ -595,6 +628,7 @@ impl MidiImpl of MidiTrait {
                         Message::PITCH_WHEEL(PitchWheel) => {},
                         Message::AFTER_TOUCH(AfterTouch) => {},
                         Message::POLY_TOUCH(PolyTouch) => {},
+                        Message::PROGRAM_CHANGE(ProgramChange) => {},
                     }
                 },
                 Option::None(_) => { break; }
@@ -673,6 +707,9 @@ impl MidiImpl of MidiTrait {
                         Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent); },
                         Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
                         Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
+                        Message::PROGRAM_CHANGE(ProgramChange) => {
+                            eventlist.append(*currentevent);
+                        },
                     }
                 },
                 Option::None(_) => { break; }
@@ -735,6 +772,9 @@ impl MidiImpl of MidiTrait {
                         Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent); },
                         Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
                         Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
+                        Message::PROGRAM_CHANGE(ProgramChange) => {
+                            eventlist.append(*currentevent);
+                        },
                     }
                 },
                 Option::None(_) => { break; }

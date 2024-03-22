@@ -29,7 +29,8 @@ enum Message {
     CONTROL_CHANGE: ControlChange,
     PITCH_WHEEL: PitchWheel,
     AFTER_TOUCH: AfterTouch,
-    POLY_TOUCH: PolyTouch
+    POLY_TOUCH: PolyTouch,
+    PROGRAM_CHANGE: ProgramChange
 }
 
 #[derive(Copy, Drop)]
@@ -90,6 +91,20 @@ struct PolyTouch {
     note: u8,
     value: u8,
     time: FP32x32
+}
+
+#[derive(Copy, Drop)]
+struct ProgramChange {
+    channel: u8,
+    program: u8, // Program number (0 to 127)
+    time: FP32x32
+}
+
+struct SysEx {
+    manufacturer_id: Span<u8>, // Manufacturer ID bytes
+    device_id: Option<u8>,    // Optional device ID byte
+    data: Span<u8>,            // Data payload
+    checksum: Option<u8>,     // Optional checksum byte
 }
 
 /// =========================================

@@ -584,19 +584,19 @@ impl MidiImpl of MidiTrait {
                             eventlist.append(*currentevent);
                         },
                         Message::CONTROL_CHANGE(ControlChange) => {
-                            let outcc = ControlChange {
-                                channel: *ControlChange.channel,
-                                control: *ControlChange.control,
-                                value: next_instrument_in_group(*ControlChange.value),
-                                time: *ControlChange.time
-                            };
-                            eventlist.append(Message::CONTROL_CHANGE((outcc)));
+                            eventlist.append(*currentevent);
                         },
                         Message::PITCH_WHEEL(PitchWheel) => { eventlist.append(*currentevent); },
                         Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
                         Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
                         Message::PROGRAM_CHANGE(ProgramChange) => {
-                            eventlist.append(*currentevent);
+                            let newprogchg = ProgramChange {
+                                channel: *ProgramChange.channel,
+                                program: next_instrument_in_group(*ProgramChange.program),
+                                time: *ProgramChange.time
+                            };
+                            let pchgmessage = Message::PROGRAM_CHANGE((newprogchg));
+                            eventlist.append(pchgmessage);
                         },
                     }
                 },

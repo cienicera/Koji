@@ -627,4 +627,162 @@ mod tests {
             };
         };
     }
+
+    #[test]
+    #[available_gas(100000000000)]
+    fn remamp_instruments_test() {
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        let tempo = SetTempo { tempo: 120, time: Option::Some(FP32x32 { mag: 1000, sign: false }) };
+
+        let newnoteon1 = NoteOn {
+            channel: 0, note: 60, velocity: 100, time: FP32x32 { mag: 0, sign: false }
+        };
+
+        let newnoteon2 = NoteOn {
+            channel: 0, note: 71, velocity: 100, time: FP32x32 { mag: 1000, sign: false }
+        };
+
+        let newnoteon3 = NoteOn {
+            channel: 0, note: 90, velocity: 100, time: FP32x32 { mag: 1500, sign: false }
+        };
+
+        let newnoteoff1 = NoteOff {
+            channel: 0, note: 60, velocity: 100, time: FP32x32 { mag: 2000, sign: false }
+        };
+
+        let newnoteoff2 = NoteOff {
+            channel: 0, note: 71, velocity: 100, time: FP32x32 { mag: 1500, sign: false }
+        };
+
+        let newnoteoff3 = NoteOff {
+            channel: 0, note: 90, velocity: 100, time: FP32x32 { mag: 5000, sign: false }
+        };
+
+        let notemessageon1 = Message::NOTE_ON((newnoteon1));
+        let notemessageon2 = Message::NOTE_ON((newnoteon2));
+        let notemessageon3 = Message::NOTE_ON((newnoteon3));
+
+        let notemessageoff1 = Message::NOTE_OFF((newnoteoff1));
+        let notemessageoff2 = Message::NOTE_OFF((newnoteoff2));
+        let notemessageoff3 = Message::NOTE_OFF((newnoteoff3));
+
+        // Set Instrument
+
+        let outcc = ControlChange {
+                                channel: 0,
+                                control: 0,
+                                value: 7,
+                                time: FP32x32 { mag: 6000, sign: false }
+                            };
+
+        let outcc2 = ControlChange {
+                                channel: 0,
+                                control: 0,
+                                value: 1,
+                                time: FP32x32 { mag: 6100, sign: false }
+                            };
+
+        let outcc3 = ControlChange {
+                                channel: 0,
+                                control: 0,
+                                value: 8,
+                                time: FP32x32 { mag: 6100, sign: false }
+                            }; 
+        let outcc4 = ControlChange {
+                                channel: 0,
+                                control: 0,
+                                value: 126,
+                                time: FP32x32 { mag: 6100, sign: false }
+                            }; 
+
+        let outcc5 = ControlChange {
+                                channel: 0,
+                                control: 0,
+                                value: 127,
+                                time: FP32x32 { mag: 6100, sign: false }
+                            };                     
+
+        let ccmessage = Message::CONTROL_CHANGE((outcc));
+        let ccmessage2 = Message::CONTROL_CHANGE((outcc2));
+        let ccmessage3 = Message::CONTROL_CHANGE((outcc3));
+        let ccmessage4 = Message::CONTROL_CHANGE((outcc4));
+        let ccmessage5 = Message::CONTROL_CHANGE((outcc5));
+
+        //Set Tempo
+
+        let tempo = SetTempo { tempo: 121, time: Option::Some(FP32x32 { mag: 1500, sign: false }) };
+        let tempomessage = Message::SET_TEMPO((tempo));
+
+        eventlist.append(tempomessage);
+
+        eventlist.append(notemessageon1);
+        eventlist.append(notemessageon2);
+        eventlist.append(notemessageon3);
+
+        eventlist.append(notemessageoff1);
+        eventlist.append(notemessageoff2);
+        eventlist.append(notemessageoff3);
+
+        eventlist.append(ccmessage);
+        eventlist.append(ccmessage2);
+        eventlist.append(ccmessage3);
+        eventlist.append(ccmessage4);
+        eventlist.append(ccmessage5);
+
+
+
+        let midiobj = Midi { events: eventlist.span() };
+
+        // minor third - 3 semitones
+        let minorthird = i32 { mag: 3, sign: false };
+        // octave - 12 semitones
+        let octave = i32 { mag: 12, sign: true };
+
+        let midiobjnotes = midiobj.remap_instruments(2);
+
+        // Assert the correctness of the modified Midi object
+
+        // test to ensure correct positive note transpositions
+        let mut ev = midiobjnotes.clone().events;
+        let mut count = 0;
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {},
+                        Message::NOTE_OFF(NoteOff) => {},
+                        Message::SET_TEMPO(SetTempo) => {},
+                        Message::TIME_SIGNATURE(TimeSignature) => {},
+                        Message::CONTROL_CHANGE(ControlChange) => {
+                            let ccc = *ControlChange.value;
+                            'value is z'.print();
+                            count = count + 1;
+                            ccc.print();
+                            'value is z'.print();
+                            if *ControlChange.value == 0 {
+                                count = count + 1;
+                            } else if *ControlChange.value == 2 {
+                                
+                                count = count + 1;
+                            } else if *ControlChange.value == 9 {
+                                
+                                count = count + 1;
+                            } else if *ControlChange.value == 127 {
+                               
+                                count = count + 1;
+                            } else {}
+                    
+
+                        },
+                        Message::PITCH_WHEEL(PitchWheel) => {},
+                        Message::AFTER_TOUCH(AfterTouch) => {},
+                        Message::POLY_TOUCH(PolyTouch) => {},
+                    }
+                },
+                Option::None(_) => { break; }
+            };
+        };
+    }
+
 }

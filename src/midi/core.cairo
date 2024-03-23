@@ -4,6 +4,7 @@ use core::option::OptionTrait;
 use koji::midi::types::{
     Midi, Message, Modes, ArpPattern, VelocityCurve, NoteOn, NoteOff, SetTempo, TimeSignature,
     ControlChange, PitchWheel, AfterTouch, PolyTouch, Direction, PitchClass, ProgramChange,
+    SystemExclusive,
 };
 use alexandria_data_structures::stack::{StackTrait, Felt252Stack, NullableStack};
 use alexandria_data_structures::array_ext::{ArrayTraitExt, SpanTraitExt};
@@ -124,6 +125,9 @@ impl MidiImpl of MidiTrait {
                         Message::PROGRAM_CHANGE(ProgramChange) => {
                             eventlist.append(*currentevent);
                         },
+                        Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
+                            eventlist.append(*currentevent);
+                        },
                     }
                 },
                 Option::None(_) => { break; }
@@ -165,6 +169,9 @@ impl MidiImpl of MidiTrait {
                     Message::AFTER_TOUCH(AfterTouch) => { maxtime = *AfterTouch.time; },
                     Message::POLY_TOUCH(PolyTouch) => { maxtime = *PolyTouch.time; },
                     Message::PROGRAM_CHANGE(ProgramChange) => { maxtime = *ProgramChange.time; },
+                    Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
+                        maxtime = *SystemExclusive.time;
+                    },
                 }
             },
             Option::None(_) => {}
@@ -193,6 +200,9 @@ impl MidiImpl of MidiTrait {
                     Message::AFTER_TOUCH(AfterTouch) => { mintime = *AfterTouch.time; },
                     Message::POLY_TOUCH(PolyTouch) => { mintime = *PolyTouch.time; },
                     Message::PROGRAM_CHANGE(ProgramChange) => { mintime = *ProgramChange.time; },
+                    Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
+                        mintime = *SystemExclusive.time;
+                    },
                 }
             },
             Option::None(_) => {}
@@ -293,6 +303,17 @@ impl MidiImpl of MidiTrait {
                             let pchgmessage = Message::PROGRAM_CHANGE((newprogchg));
                             eventlist.append(pchgmessage);
                         },
+                        Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
+                            let newsysex = SystemExclusive {
+                                manufacturer_id: *SystemExclusive.manufacturer_id,
+                                device_id: *SystemExclusive.device_id,
+                                data: *SystemExclusive.data,
+                                checksum: *SystemExclusive.checksum,
+                                time: (maxtime - *SystemExclusive.time) + mintime
+                            };
+                            let sysexgmessage = Message::SYSTEM_EXCLUSIVE((newsysex));
+                            eventlist.append(sysexgmessage);
+                        },
                     }
                 },
                 Option::None(_) => { break; }
@@ -342,6 +363,9 @@ impl MidiImpl of MidiTrait {
                         Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent) },
                         Message::PROGRAM_CHANGE(ProgramChange) => {
                             eventlist.append(*currentevent)
+                        },
+                        Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
+                            eventlist.append(*currentevent);
                         },
                     }
                 },
@@ -394,6 +418,7 @@ impl MidiImpl of MidiTrait {
                         Message::AFTER_TOUCH(AfterTouch) => {},
                         Message::POLY_TOUCH(PolyTouch) => {},
                         Message::PROGRAM_CHANGE(ProgramChange) => {},
+                        Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {},
                     }
                 },
                 Option::None(_) => { break; }
@@ -505,6 +530,17 @@ impl MidiImpl of MidiTrait {
                             let pchgmessage = Message::PROGRAM_CHANGE((newprogchg));
                             eventlist.append(pchgmessage);
                         },
+                        Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
+                            let newsysex = SystemExclusive {
+                                manufacturer_id: *SystemExclusive.manufacturer_id,
+                                device_id: *SystemExclusive.device_id,
+                                data: *SystemExclusive.data,
+                                checksum: *SystemExclusive.checksum,
+                                time: *SystemExclusive.time * newfactor
+                            };
+                            let sysexgmessage = Message::SYSTEM_EXCLUSIVE((newsysex));
+                            eventlist.append(sysexgmessage);
+                        },
                     }
                 },
                 Option::None(_) => { break; }
@@ -546,6 +582,9 @@ impl MidiImpl of MidiTrait {
                         Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
                         Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
                         Message::PROGRAM_CHANGE(ProgramChange) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
                             eventlist.append(*currentevent);
                         },
                     }
@@ -598,6 +637,9 @@ impl MidiImpl of MidiTrait {
                             let pchgmessage = Message::PROGRAM_CHANGE((newprogchg));
                             eventlist.append(pchgmessage);
                         },
+                        Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
+                            eventlist.append(*currentevent);
+                        },
                     }
                 },
                 Option::None(_) => {
@@ -629,6 +671,7 @@ impl MidiImpl of MidiTrait {
                         Message::AFTER_TOUCH(AfterTouch) => {},
                         Message::POLY_TOUCH(PolyTouch) => {},
                         Message::PROGRAM_CHANGE(ProgramChange) => {},
+                        Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {},
                     }
                 },
                 Option::None(_) => { break; }
@@ -710,6 +753,9 @@ impl MidiImpl of MidiTrait {
                         Message::PROGRAM_CHANGE(ProgramChange) => {
                             eventlist.append(*currentevent);
                         },
+                        Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
+                            eventlist.append(*currentevent);
+                        },
                     }
                 },
                 Option::None(_) => { break; }
@@ -773,6 +819,9 @@ impl MidiImpl of MidiTrait {
                         Message::AFTER_TOUCH(AfterTouch) => { eventlist.append(*currentevent); },
                         Message::POLY_TOUCH(PolyTouch) => { eventlist.append(*currentevent); },
                         Message::PROGRAM_CHANGE(ProgramChange) => {
+                            eventlist.append(*currentevent);
+                        },
+                        Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
                             eventlist.append(*currentevent);
                         },
                     }

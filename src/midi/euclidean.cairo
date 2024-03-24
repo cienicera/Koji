@@ -3,11 +3,18 @@ use core::array::ArrayTrait;
 use core::fmt::Display;
 use core::fmt::Formatter;
 
-// TODO: recommended type for n and k? maximum size? used elsewhere?
+/// ======================================================
+/// ============= Euclidean Rythm Algorithm ==============
+/// ======================================================
 
-fn euclidean(n: u32, k: u32) -> Array<u32>{
-    let mut pattern : Array<u32> = ArrayTrait::new();
-    let mut i: u32 = 0;
+// Returns a pattern array corresponding to the Euclidean rhythm Algorithm
+// based on fixed size n and k ccorrespondind to number of beats and number of silences
+
+// TODO: restrict cases with 0 beats or 0 silences
+
+fn euclidean(n: i8, k: i8) -> Array<i8>{
+    let mut pattern : Array<i8> = ArrayTrait::new();
+    let mut i: i8 = 0;
     loop {
         if i == n {
             break ();
@@ -18,8 +25,8 @@ fn euclidean(n: u32, k: u32) -> Array<u32>{
     println!("PATTERN: {:?}", pattern);
 
     
-    let mut counts : Array<u32> = ArrayTrait::new();
-    let mut i: u32 = 0;
+    let mut counts : Array<i8> = ArrayTrait::new();
+    let mut i: i8 = 0;
     loop {
         if i == k {
             break ();
@@ -29,11 +36,11 @@ fn euclidean(n: u32, k: u32) -> Array<u32>{
     };
 
 
-    let remainder : u32 = n % k;    
+    let remainder : i8 = n % k;    
 
-    let mut index : u32 = 0;
+    let mut index : i8 = 0;
     
-    //TODO: look for another more elegant way than this
+    //TODO: look for another more memory-efficient way to keep snaps of the array
     let counts2 = counts.span();
 
     
@@ -54,28 +61,24 @@ fn euclidean(n: u32, k: u32) -> Array<u32>{
         if i == k {
             break ();
         }
-        //TODO: improve modifying array pattern
         pattern = modify_array(pattern, index, 1);
-        //TODO: look for another more elegant way than this
         index += *counts2[i];
         i = i + 1;
     };
 
-    let mut x : Array<u32> = ArrayTrait::new();
+    let mut x : Array<i8> = ArrayTrait::new();
     x.append(0);
 
     return x;
 }
 
-fn main() {
-    let n = 7;
-    let k = 3;
-    euclidean(n, k);
-}
 
-fn modify_array(array: Array<u32>, index: u32, value: u32) -> Array<u32> {
-    let mut i: u32 = 0;
-    let mut new_array : Array<u32> = ArrayTrait::new();
+
+// Helper function that modifies an array. Can be optimized and/or changed in the future
+
+fn modify_array(array: Array<i8>, index: i8, value: i8) -> Array<i8> {
+    let mut i: i8 = 0;
+    let mut new_array : Array<i8> = ArrayTrait::new();
     loop {
         if i == array.len(){
             break ();
@@ -87,7 +90,6 @@ fn modify_array(array: Array<u32>, index: u32, value: u32) -> Array<u32> {
             new_array.append(*array[i]);
         }
         i = i + 1;
-        // println!("NEW ARRAY: {:?}", new_array);
     };
     return new_array;
 }

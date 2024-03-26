@@ -159,7 +159,7 @@ enum Direction {
 struct PitchInterval {
     size: u8,
     direction: Direction,
-    quality: Quality,
+    quality: Option<Quality>,
 }
 
 #[derive(Copy, Drop)]

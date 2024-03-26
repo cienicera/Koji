@@ -814,10 +814,11 @@ fn program_change_to_instrument(program_change: u8) -> GeneralMidiInstrument {
 }
 
 fn next_instrument_in_group(current_instrument: u8) -> u8 {
-    // Assuming instruments are numbered from 0 to 7
-    let totalinstruments = 8;
-    let instgroup = current_instrument / totalinstruments;
-    let instgrouprem = (current_instrument % totalinstruments) + 1 % totalinstruments;
+    // Assuming instruments are numbered from 0 to 127
+    let total_instruments_per_group = 8;
+    let inst_group = current_instrument / total_instruments_per_group;
+    let inst_group_rem = ((current_instrument % total_instruments_per_group)
+        + 1) % total_instruments_per_group;
 
-    (instgroup * 10) + instgrouprem
+    (inst_group * total_instruments_per_group) + inst_group_rem % 127
 }

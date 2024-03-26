@@ -5,3 +5,4 @@ mod time;
 mod modes;
 mod pitch;
 mod velocitycurve;
+mod euclidean;

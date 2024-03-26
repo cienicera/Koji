@@ -10,7 +10,7 @@ use debug::PrintTrait;
 use koji::midi::types::{Modes, PitchClass, OCTAVEBASE, Direction, Quality};
 use koji::midi::modes::{mode_steps};
 
-use orion::numbers::{i32, FP32x32, FP32x32Impl, FixedTrait};
+use orion::numbers::{FP32x32, FP32x32Impl, FixedTrait};
 
 
 //*****************************************************************************************************************

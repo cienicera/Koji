@@ -1,5 +1,5 @@
 use orion::operators::tensor::{Tensor, U32Tensor,};
-use orion::numbers::{i32, FP32x32};
+use orion::numbers::FP32x32;
 use core::option::OptionTrait;
 use koji::midi::types::{
     Midi, Message, Modes, ArpPattern, VelocityCurve, NoteOn, NoteOff, SetTempo, TimeSignature,
@@ -158,14 +158,11 @@ impl VelocityCurveImpl of VelocityCurveTrait {
     fn lasttime(self: @VelocityCurve) -> FP32x32 {
         let mut lasttime = FP32x32 { mag: 0, sign: false };
         let mut vct = self.clone().times;
-        let mut vcl = self.clone().levels;
 
-        let mut vctimes = ArrayTrait::<u8>::new();
-        let mut vcvalues = ArrayTrait::<u8>::new();
 
         loop {
             match vct.pop_front() {
-                Option::Some(currtime) => { let mut lasttime = *currtime; },
+                Option::Some(currtime) => { lasttime = *currtime; },
                 Option::None(_) => { break; }
             };
         };
@@ -173,18 +170,14 @@ impl VelocityCurveImpl of VelocityCurveTrait {
     }
     fn maxlevel(self: @VelocityCurve) -> u8 {
         let mut maxlevel = 0;
-        let mut vct = self.clone().times;
         let mut vcl = self.clone().levels;
-
-        let mut vctimes = ArrayTrait::<u8>::new();
-        let mut vcvalues = ArrayTrait::<u8>::new();
 
         loop {
             match vcl.pop_front() {
                 Option::Some(currlevels) => {
-                    let outnote = if (*currlevels > maxlevel) {
+                    if (*currlevels > maxlevel) {
                         maxlevel = *currlevels;
-                    };
+                    }
                 },
                 Option::None(_) => { break; }
             };
@@ -217,26 +210,23 @@ impl VelocityCurveImpl of VelocityCurveTrait {
                     },
                     Option::None(_) => {}
                 };
+            } else if ( y1 == Option::None || y2 == Option::None ) {
+                break;
             } else {
-                if (y1 == Option::None) {
-                    break;
-                } else if (y2 == Option::None) {
-                    break;
-                } else {
-                    match y1 {
-                        Option::Some(val) => { let y1val = val; },
+                match y1 {
+                        Option::Some(val) => { y1val = val.unwrap(); },
                         Option::None(_) => {}
                     }
                     match y2 {
-                        Option::Some(val) => { let y2val = val; },
+                        Option::Some(val) => { y2val = val; },
                         Option::None(_) => {}
                     }
 
                     interpolatedlevel = vc_linear_interpolation(x1, y1val, x2, y2val, timeindex);
                     break;
-                };
             }
         };
+
         interpolatedlevel
     }
 }

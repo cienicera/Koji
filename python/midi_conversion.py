@@ -67,7 +67,7 @@ def cairo_struct_to_midi(cairo_file, output_file):
 
     for match in note_off_pattern.finditer(cairo_data):
         channel, note, velocity, time = match.groups()
-        time = parse(time)
+        time = parse_fp32x32(time)
         track.append(Message('note_off', note=int(note), velocity=int(velocity), time=time, channel=int(channel)))
 
     for match in set_tempo_pattern.finditer(cairo_data):

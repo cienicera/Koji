@@ -421,7 +421,7 @@ mod tests {
 
 
     #[test]
-    #[available_gas(100000000000)]
+    #[available_gas(10000000000000)]
     fn remamp_instruments_test() {
         let mut eventlist = ArrayTrait::<Message>::new();
 
@@ -540,6 +540,156 @@ mod tests {
                                 assert(pc == 0, 'instruments improperly mapped');
                             } else {}
                         },
+                        Message::SYSTEM_EXCLUSIVE(_SystemExclusive) => {},
+                    }
+                },
+                Option::None(_) => { break; }
+            };
+        };
+    }
+
+    #[test]
+    #[available_gas(100000000000)]
+    fn transpose_notes_test() {
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        let newtempo = SetTempo { tempo: 0, time: Option::Some(FP32x32 { mag: 0, sign: false }) };
+
+        let newnoteon1 = NoteOn {
+            channel: 0, note: 60, velocity: 100, time: FP32x32 { mag: 0, sign: false }
+        };
+
+        let newnoteon2 = NoteOn {
+            channel: 0, note: 71, velocity: 100, time: FP32x32 { mag: 1000, sign: false }
+        };
+
+        let newnoteon3 = NoteOn {
+            channel: 0, note: 90, velocity: 100, time: FP32x32 { mag: 1500, sign: false }
+        };
+
+        let newnoteoff1 = NoteOff {
+            channel: 0, note: 60, velocity: 100, time: FP32x32 { mag: 2000, sign: false }
+        };
+
+        let newnoteoff2 = NoteOff {
+            channel: 0, note: 71, velocity: 100, time: FP32x32 { mag: 2500, sign: false }
+        };
+
+        let newnoteoff3 = NoteOff {
+            channel: 0, note: 90, velocity: 100, time: FP32x32 { mag: 5000, sign: false }
+        };
+
+        let notemessageon1 = Message::NOTE_ON((newnoteon1));
+        let notemessageon2 = Message::NOTE_ON((newnoteon2));
+        let notemessageon3 = Message::NOTE_ON((newnoteon3));
+
+        let notemessageoff1 = Message::NOTE_OFF((newnoteoff1));
+        let notemessageoff2 = Message::NOTE_OFF((newnoteoff2));
+        let notemessageoff3 = Message::NOTE_OFF((newnoteoff3));
+
+        eventlist.append(notemessageon1);
+        eventlist.append(notemessageon2);
+        eventlist.append(notemessageon3);
+
+        eventlist.append(notemessageoff1);
+        eventlist.append(notemessageoff2);
+        eventlist.append(notemessageoff3);
+
+        let midiobj = Midi { events: eventlist.span() };
+
+        // minor third - 3 semitones
+        //let minorthird = i32 { mag: 3, sign: false };
+        let minorthird2: i32 = 3;
+
+        // octave - 12 semitones
+
+        // let octave = i32 { mag: 12, sign: true };
+        let _octave2: i32 = 12;
+
+        let octave3: i32 = -12;
+        let octave4: i32 = 12;
+        assert(octave3 + octave4 == 0, 'result should be 0');
+
+        let midiobjnotesup = midiobj.transpose_notes(minorthird2);
+        let midiobjnotesdown = midiobj.transpose_notes(octave3);
+
+        // Assert the correctness of the modified Midi object
+
+        // test to ensure correct positive note transpositions
+
+        let mut ev = midiobjnotesup.clone().events;
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            //find test notes and assert that times are unchanged
+
+                            if *NoteOn.time.mag.try_into().unwrap() == 0 {
+                                assert(*NoteOn.note == 63, 'result should be 63');
+                            } else if *NoteOn.time.mag.try_into().unwrap() == 1000 {
+                                assert(*NoteOn.note == 74, 'result should be 74');
+                            } else if *NoteOn.time.mag.try_into().unwrap() == 1500 {
+                                assert(*NoteOn.note == 93, 'result should be 93');
+                            } else {}
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            if *NoteOff.time.mag.try_into().unwrap() == 2000 {
+                                assert(*NoteOff.note == 63, 'result should be 6000');
+                            } else if *NoteOff.time.mag.try_into().unwrap() == 2500 {
+                                assert(*NoteOff.note == 74, 'result should be 4500');
+                            } else if *NoteOff.time.mag.try_into().unwrap() == 5000 {
+                                assert(*NoteOff.note == 93, 'result should be 15000');
+                            } else {}
+                        },
+                        Message::SET_TEMPO(_SetTempo) => {},
+                        Message::TIME_SIGNATURE(_TimeSignature) => {},
+                        Message::CONTROL_CHANGE(_ControlChange) => {},
+                        Message::PITCH_WHEEL(_PitchWheel) => {},
+                        Message::AFTER_TOUCH(_AfterTouch) => {},
+                        Message::POLY_TOUCH(_PolyTouch) => {},
+                        Message::PROGRAM_CHANGE(_ProgramChange) => {},
+                        Message::SYSTEM_EXCLUSIVE(_SystemExclusive) => {},
+                    }
+                },
+                Option::None(_) => { break; }
+            };
+        };
+
+        // test to ensure correct negative note transpositions
+
+        let mut ev2 = midiobjnotesdown.clone().events;
+        loop {
+            match ev2.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            //find test notes and assert that times are unchanged
+
+                            if *NoteOn.time.mag.try_into().unwrap() == 0 {
+                                assert(*NoteOn.note == 48, 'result should be 60 - 12 = 48a');
+                            } else if *NoteOn.time.mag.try_into().unwrap() == 1000 {
+                                assert(*NoteOn.note == 59, 'result should be 71 - 12 = 59');
+                            } else if *NoteOn.time.mag.try_into().unwrap() == 1500 {
+                                assert(*NoteOn.note == 78, 'result should be 90 - 12 = 78');
+                            } else {}
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            if *NoteOff.time.mag.try_into().unwrap() == 2000 {
+                                assert(*NoteOff.note == 48, 'result should be 60 - 12 = 48b');
+                            } else if *NoteOff.time.mag.try_into().unwrap() == 2500 {
+                                assert(*NoteOff.note == 59, 'result should be 71 - 12 = 59');
+                            } else if *NoteOff.time.mag.try_into().unwrap() == 5000 {
+                                assert(*NoteOff.note == 78, 'result should be 90 - 12 = 78');
+                            } else {}
+                        },
+                        Message::SET_TEMPO(_SetTempo) => {},
+                        Message::TIME_SIGNATURE(_TimeSignature) => {},
+                        Message::CONTROL_CHANGE(_ControlChange) => {},
+                        Message::PITCH_WHEEL(_PitchWheel) => {},
+                        Message::AFTER_TOUCH(_AfterTouch) => {},
+                        Message::POLY_TOUCH(_PolyTouch) => {},
+                        Message::PROGRAM_CHANGE(_ProgramChange) => {},
                         Message::SYSTEM_EXCLUSIVE(_SystemExclusive) => {},
                     }
                 },

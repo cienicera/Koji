@@ -1,4 +1,5 @@
 use core::traits::TryInto;
+use core::traits::Into;
 use orion::operators::tensor::{Tensor, U32Tensor,};
 use orion::numbers::FP32x32;
 use core::option::OptionTrait;
@@ -82,14 +83,18 @@ impl MidiImpl of MidiTrait {
                 Option::Some(currentevent) => {
                     match currentevent {
                         Message::NOTE_ON(NoteOn) => {
+                            let mut note = *NoteOn.note;
+                            let inote: i32 = note.try_into().unwrap();
+
                             let outnote = if semitones < 0 {
-                                *NoteOn.note - semitones.try_into().unwrap()
+                                inote + semitones
                             } else {
-                                *NoteOn.note + semitones.try_into().unwrap()
+                                inote + semitones
                             };
+
                             let newnote = NoteOn {
                                 channel: *NoteOn.channel,
-                                note: outnote,
+                                note: outnote.try_into().unwrap(),
                                 velocity: *NoteOn.velocity,
                                 time: *NoteOn.time
                             };
@@ -97,15 +102,18 @@ impl MidiImpl of MidiTrait {
                             eventlist.append(notemessage);
                         },
                         Message::NOTE_OFF(NoteOff) => {
+                            let mut note = *NoteOff.note;
+                            let inote: i32 = note.try_into().unwrap();
+
                             let outnote = if semitones < 0 {
-                                *NoteOff.note - semitones.try_into().unwrap()
+                                inote + semitones
                             } else {
-                                *NoteOff.note + semitones.try_into().unwrap()
+                                inote + semitones
                             };
 
                             let newnote = NoteOff {
                                 channel: *NoteOff.channel,
-                                note: outnote,
+                                note: outnote.try_into().unwrap(),
                                 velocity: *NoteOff.velocity,
                                 time: *NoteOff.time
                             };

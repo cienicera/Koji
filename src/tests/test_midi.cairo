@@ -201,20 +201,18 @@ mod tests {
                                     '1 should quantize to 0'
                                 );
                                 let num = *NoteOn.time.mag.try_into().unwrap();
-                                'num'.print();
-                                num.print();
+                            // 'num'.print();
+                            //  num.print();
                             } else if *NoteOn.note == 71 {
                                 let num2 = *NoteOn.time.mag.try_into().unwrap();
                                 assert(num2 == 1000, '1001 should quantize to 1000');
-
-                                'num2'.print();
-                                num2.print();
+                            //  'num2'.print();
+                            //  num2.print();
                             } else if *NoteOn.note == 90 {
                                 let num3 = *NoteOn.time.mag.try_into().unwrap();
                                 assert(num3 == 2000, '1500 should quantize to 2000');
-
-                                'num3'.print();
-                                num3.print();
+                            //  'num3'.print();
+                            //   num3.print();
                             } else {}
                         },
                         Message::NOTE_OFF(_NoteOff) => {},
@@ -381,8 +379,8 @@ mod tests {
 
                             if *NoteOn.note == 60 {
                                 let ptest = *NoteOn.time.mag.try_into().unwrap();
-                                'reverse note time'.print();
-                                ptest.print();
+                            //   'reverse note time'.print();
+                            //   ptest.print();
                             //  assert(*NoteOn.time.mag == 0, 'result should be 0');
                             } else if *NoteOn
                                 .note == 71 { //   assert(*NoteOn.time.mag == 1000, 'result should be 1000');
@@ -681,6 +679,100 @@ mod tests {
                                 assert(*NoteOff.note == 59, 'result should be 71 - 12 = 59');
                             } else if *NoteOff.time.mag.try_into().unwrap() == 5000 {
                                 assert(*NoteOff.note == 78, 'result should be 90 - 12 = 78');
+                            } else {}
+                        },
+                        Message::SET_TEMPO(_SetTempo) => {},
+                        Message::TIME_SIGNATURE(_TimeSignature) => {},
+                        Message::CONTROL_CHANGE(_ControlChange) => {},
+                        Message::PITCH_WHEEL(_PitchWheel) => {},
+                        Message::AFTER_TOUCH(_AfterTouch) => {},
+                        Message::POLY_TOUCH(_PolyTouch) => {},
+                        Message::PROGRAM_CHANGE(_ProgramChange) => {},
+                        Message::SYSTEM_EXCLUSIVE(_SystemExclusive) => {},
+                    }
+                },
+                Option::None(_) => { break; }
+            };
+        };
+    }
+
+    #[test]
+    #[available_gas(100000000000)]
+    fn change_note_duration_test() {
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        let newtempo = SetTempo { tempo: 0, time: Option::Some(FP32x32 { mag: 0, sign: false }) };
+
+        let newnoteon1 = NoteOn {
+            channel: 0, note: 60, velocity: 100, time: FP32x32 { mag: 0, sign: false }
+        };
+
+        let notetwomag = FP32x32 { mag: 1000, sign: false };
+
+        let newnoteon2 = NoteOn { channel: 0, note: 71, velocity: 100, time: notetwomag };
+
+        let newnoteon3 = NoteOn {
+            channel: 0, note: 90, velocity: 100, time: FP32x32 { mag: 1500, sign: false }
+        };
+
+        let newnoteoff1 = NoteOff {
+            channel: 0, note: 60, velocity: 100, time: FP32x32 { mag: 2000, sign: false }
+        };
+
+        let newnoteoff2 = NoteOff {
+            channel: 0, note: 71, velocity: 100, time: FP32x32 { mag: 3000, sign: false }
+        };
+
+        let newnoteoff3 = NoteOff {
+            channel: 0, note: 90, velocity: 100, time: FP32x32 { mag: 5000, sign: false }
+        };
+
+        let notemessageon1 = Message::NOTE_ON((newnoteon1));
+        let notemessageon2 = Message::NOTE_ON((newnoteon2));
+        let notemessageon3 = Message::NOTE_ON((newnoteon3));
+
+        let notemessageoff1 = Message::NOTE_OFF((newnoteoff1));
+        let notemessageoff2 = Message::NOTE_OFF((newnoteoff2));
+        let notemessageoff3 = Message::NOTE_OFF((newnoteoff3));
+
+        eventlist.append(notemessageon1);
+        eventlist.append(notemessageon2);
+        eventlist.append(notemessageon3);
+
+        eventlist.append(notemessageoff1);
+        eventlist.append(notemessageoff2);
+        eventlist.append(notemessageoff3);
+
+        let midiobj = Midi { events: eventlist.span() };
+
+        let factor1: i32 = 3;
+        let midiobjnotes = midiobj.change_note_duration(factor1);
+
+        // Assert the correctness of the modified Midi object
+
+        let mut ev = midiobjnotes.clone().events;
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            //find test notes and assert that times are unchanged
+
+                            if *NoteOn.note == 60 {
+                                assert(*NoteOn.time.mag == 0, 'result should be 0');
+                            } else if *NoteOn.note == 71 {
+                                assert(*NoteOn.time.mag == 3000, 'result should be 3000');
+                            } else if *NoteOn.note == 90 {
+                                assert(*NoteOn.time.mag == 4500, 'result should be 4500');
+                            } else {}
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            if *NoteOff.note == 60 {
+                                assert(*NoteOff.time.mag == 6000, 'result should be 6000');
+                            } else if *NoteOff.note == 71 {
+                                assert(*NoteOff.time.mag == 9000, 'result should be 4500');
+                            } else if *NoteOff.note == 90 {
+                                assert(*NoteOff.time.mag == 15000, 'result should be 15000');
                             } else {}
                         },
                         Message::SET_TEMPO(_SetTempo) => {},

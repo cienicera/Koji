@@ -439,7 +439,7 @@ impl MidiImpl of MidiTrait {
 
 
     fn change_note_duration(self: @Midi, factor: i32) -> Midi {
-        let newfactor = FP32x32 { mag: factor.try_into().unwrap(), sign: (factor < 0) };
+        let newfactor = FP32x32 { mag: 3, sign: false };
         let mut ev = self.clone().events;
         let mut eventlist = ArrayTrait::<Message>::new();
 
@@ -448,21 +448,35 @@ impl MidiImpl of MidiTrait {
                 Option::Some(currentevent) => {
                     match currentevent {
                         Message::NOTE_ON(NoteOn) => {
+                            let time = *NoteOn.time.mag;
+                            let intime: i32 = time.try_into().unwrap();
+                            let newmag = intime * factor;
+                            let outfactor = FP32x32 {
+                                mag: newmag.try_into().unwrap(), sign: (newmag < 0)
+                            };
+
                             let newnote = NoteOn {
                                 channel: *NoteOn.channel,
                                 note: *NoteOn.note,
                                 velocity: *NoteOn.velocity,
-                                time: *NoteOn.time * newfactor
+                                time: outfactor
                             };
                             let notemessage = Message::NOTE_ON((newnote));
                             eventlist.append(notemessage);
                         },
                         Message::NOTE_OFF(NoteOff) => {
+                            let time = *NoteOff.time.mag;
+                            let intime: i32 = time.try_into().unwrap();
+                            let newmag = intime * factor;
+                            let outfactor = FP32x32 {
+                                mag: newmag.try_into().unwrap(), sign: (newmag < 0)
+                            };
+
                             let newnote = NoteOff {
                                 channel: *NoteOff.channel,
                                 note: *NoteOff.note,
                                 velocity: *NoteOff.velocity,
-                                time: *NoteOff.time * newfactor
+                                time: outfactor
                             };
                             let notemessage = Message::NOTE_OFF((newnote));
                             eventlist.append(notemessage);

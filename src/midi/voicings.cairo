@@ -27,87 +27,119 @@ enum Voicings {
 
 fn triad_root_position() -> Span<PitchInterval> {
     let mut intervals = ArrayTrait::<PitchInterval>::new();
-    intervals.append(PitchInterval { size: 2, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 4, direction: Direction::Up(()) });
+    intervals
+        .append(PitchInterval { size: 2, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 4, direction: Direction::Up(()), quality: Option::None });
     intervals.span()
 }
 
 fn triad_first_inversion() -> Span<PitchInterval> {
     let mut intervals = ArrayTrait::<PitchInterval>::new();
-    intervals.append(PitchInterval { size: 2, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 5, direction: Direction::Up(()) });
+    intervals
+        .append(PitchInterval { size: 2, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 5, direction: Direction::Up(()), quality: Option::None });
     intervals.span()
 }
 
 fn triad_second_inversion() -> Span<PitchInterval> {
     let mut intervals = ArrayTrait::<PitchInterval>::new();
-    intervals.append(PitchInterval { size: 3, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 5, direction: Direction::Up(()) });
+    intervals
+        .append(PitchInterval { size: 3, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 5, direction: Direction::Up(()), quality: Option::None });
     intervals.span()
 }
 
 fn maj_7_no_root_3rd_inversion() -> Span<PitchInterval> {
     let mut intervals = ArrayTrait::<PitchInterval>::new();
-    intervals.append(PitchInterval { size: 1, direction: Direction::Down(()) });
-    intervals.append(PitchInterval { size: 2, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 4, direction: Direction::Up(()) });
+    intervals
+        .append(PitchInterval { size: 1, direction: Direction::Down(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 2, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 4, direction: Direction::Up(()), quality: Option::None });
     intervals.span()
 }
 
 fn maj_7_no_root_3rd_inversion2() -> Span<PitchInterval> {
     let mut intervals = ArrayTrait::<PitchInterval>::new();
-    intervals.append(PitchInterval { size: 1, direction: Direction::Down(()) });
-    intervals.append(PitchInterval { size: 2, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 4, direction: Direction::Up(()) });
+    intervals
+        .append(PitchInterval { size: 1, direction: Direction::Down(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 2, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 4, direction: Direction::Up(()), quality: Option::None });
     intervals.span()
 }
 
 fn maj_7_no_root_3rd_inversion_add6() -> Span<PitchInterval> {
     let mut intervals = ArrayTrait::<PitchInterval>::new();
-    intervals.append(PitchInterval { size: 1, direction: Direction::Down(()) });
-    intervals.append(PitchInterval { size: 2, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 5, direction: Direction::Up(()) });
+    intervals
+        .append(PitchInterval { size: 1, direction: Direction::Down(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 2, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 5, direction: Direction::Up(()), quality: Option::None });
     intervals.span()
 }
 
 fn maj_9_no_root_3rd_inversion_add6() -> Span<PitchInterval> {
     let mut intervals = ArrayTrait::<PitchInterval>::new();
-    intervals.append(PitchInterval { size: 1, direction: Direction::Down(()) });
-    intervals.append(PitchInterval { size: 1, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 2, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 5, direction: Direction::Up(()) });
+    intervals
+        .append(PitchInterval { size: 1, direction: Direction::Down(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 1, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 2, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 5, direction: Direction::Up(()), quality: Option::None });
     intervals.span()
 }
 
 fn fourths_1() -> Span<PitchInterval> {
     let mut intervals = ArrayTrait::<PitchInterval>::new();
-    intervals.append(PitchInterval { size: 1, direction: Direction::Down(()) });
-    intervals.append(PitchInterval { size: 1, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 2, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 5, direction: Direction::Up(()) });
+    intervals
+        .append(PitchInterval { size: 1, direction: Direction::Down(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 1, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 2, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 5, direction: Direction::Up(()), quality: Option::None });
     intervals.span()
 }
 
 fn plus_four_7() -> Span<PitchInterval> {
     let mut intervals = ArrayTrait::<PitchInterval>::new();
-    intervals.append(PitchInterval { size: 1, direction: Direction::Down(()) });
-    intervals.append(PitchInterval { size: 2, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 3, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 5, direction: Direction::Up(()) });
+    intervals
+        .append(PitchInterval { size: 1, direction: Direction::Down(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 2, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 3, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 5, direction: Direction::Up(()), quality: Option::None });
     intervals.span()
 }
 
 fn plus_four_7_2() -> Span<PitchInterval> {
     let mut intervals = ArrayTrait::<PitchInterval>::new();
-    intervals.append(PitchInterval { size: 2, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 3, direction: Direction::Up(()) });
-    intervals.append(PitchInterval { size: 6, direction: Direction::Up(()) });
+    intervals
+        .append(PitchInterval { size: 2, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 3, direction: Direction::Up(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 6, direction: Direction::Up(()), quality: Option::None });
     intervals.span()
 }
 
 fn seventh_and_third() -> Span<PitchInterval> {
     let mut intervals = ArrayTrait::<PitchInterval>::new();
-    intervals.append(PitchInterval { size: 1, direction: Direction::Down(()) });
-    intervals.append(PitchInterval { size: 2, direction: Direction::Up(()) });
+    intervals
+        .append(PitchInterval { size: 1, direction: Direction::Down(()), quality: Option::None });
+    intervals
+        .append(PitchInterval { size: 2, direction: Direction::Up(()), quality: Option::None });
     intervals.span()
 }

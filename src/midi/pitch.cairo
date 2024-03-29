@@ -7,7 +7,7 @@ use traits::TryInto;
 use traits::Into;
 use debug::PrintTrait;
 
-use koji::midi::types::{Modes, PitchClass, OCTAVEBASE, Direction, Quality};
+use koji::midi::types::{Modes, PitchClass, OCTAVEBASE, Direction, Quality, PitchInterval};
 use koji::midi::modes::{mode_steps};
 
 use orion::numbers::{FP32x32, FP32x32Impl, FixedTrait};
@@ -67,6 +67,26 @@ impl PitchClassImpl of PitchClassTrait {
 // Converts a PitchClass to a MIDI keynum
 fn pc_to_keynum(pc: PitchClass) -> u8 {
     pc.note + (OCTAVEBASE * (pc.octave + 1))
+}
+
+// Converts i32 to a PitchInterval
+fn i32_to_pitchinterval(steps: i32) -> PitchInterval {
+    //pc.note + (OCTAVEBASE * (pc.octave + 1))
+    let mut outsteps = 0;
+    let mut outpi = PitchInterval {
+        size: 1, direction: Direction::Down(()), quality: Option::None
+    };
+
+    if steps < 0 {
+        outsteps = (-1 * steps).try_into().unwrap();
+        outpi =
+            PitchInterval { size: outsteps, direction: Direction::Down(()), quality: Option::None }
+    } else {
+        outsteps = steps.try_into().unwrap();
+        outpi =
+            PitchInterval { size: outsteps, direction: Direction::Down(()), quality: Option::None };
+    };
+    outpi
 }
 
 // Converts a PitchClass to a Frequency: freq = 440.0 * (2 ** ((keynum - 69) / 12.0))
@@ -140,9 +160,7 @@ fn mode_notes_above_note_base(pc: PitchClass, pcoll: Span<u8>) -> Span<u8> {
                 sum += *step;
                 outarr.append((pcnote + sum) % OCTAVEBASE);
             },
-            Option::None(_) => {
-                break;
-            }
+            Option::None(_) => { break; }
         };
     };
 
@@ -167,9 +185,7 @@ fn get_notes_of_key(pc: PitchClass, pcoll: Span<u8>) -> Span<u8> {
                 sum += *step;
                 outarr.append(sum % OCTAVEBASE);
             },
-            Option::None(_) => {
-                break;
-            }
+            Option::None(_) => { break; }
         };
     };
 
@@ -196,9 +212,7 @@ fn get_scale_degree(pc: PitchClass, tonic: PitchClass, pcoll: Span<u8>) -> u8 {
                     };
                 }
             },
-            Option::None(_) => {
-                break;
-            }
+            Option::None(_) => { break; }
         };
     };
 
@@ -247,12 +261,8 @@ fn modal_transposition(
     let mut keyn = pc.keynum();
 
     match direction {
-        Direction::Up(_) => {
-            keyn = keyn + sum;
-        },
-        Direction::Down(_) => {
-            keyn = keyn - sum;
-        },
+        Direction::Up(_) => { keyn = keyn + sum; },
+        Direction::Down(_) => { keyn = keyn - sum; },
         Direction::Oblique(_) => {},
     }
 

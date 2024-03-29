@@ -770,7 +770,7 @@ mod tests {
                             if *NoteOff.note == 60 {
                                 assert(*NoteOff.time.mag == 6000, 'result should be 6000');
                             } else if *NoteOff.note == 71 {
-                                assert(*NoteOff.time.mag == 9000, 'result should be 4500');
+                                assert(*NoteOff.time.mag == 9000, 'result should be 9000');
                             } else if *NoteOff.note == 90 {
                                 assert(*NoteOff.time.mag == 15000, 'result should be 15000');
                             } else {}
@@ -854,9 +854,9 @@ mod tests {
                         },
                         Message::NOTE_OFF(NoteOff) => {
                             if *NoteOff.note == 60 {
-                                assert(*NoteOff.time.mag == 3000, 'result should be 6000');
+                                assert(*NoteOff.time.mag == 3000, 'result should be 3000');
                             } else if *NoteOff.note == 71 {
-                                assert(*NoteOff.time.mag == 12000, 'result should be 4500');
+                                assert(*NoteOff.time.mag == 12000, 'result should be 12000');
                             } else if *NoteOff.note == 90 {} else {}
                         },
                         Message::SET_TEMPO(_SetTempo) => {},

@@ -1,0 +1,36 @@
+.inputfield {
+  margin: 0 0 20px 0;
+  margin-left: 20px;
+  height: 45px;
+  width: 600px;
+  border: 2px solid rgb(5, 176, 59);
+  border-radius: 5px;
+}
+
+.label {
+  color: rgb(5, 176, 59);
+  font-size: larger;
+  font-weight: 600;
+}
+
+.button {
+  color: rgb(5, 176, 59);
+  font-size: larger;
+  margin: 0 0 20px 0;
+  margin-left: 20px;
+  height: 50px;
+  width: 160px;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #837e7e;
+}
+
+.button:hover {
+  margin: 0 0 20px 0;
+  margin-left: 20px;
+  height: 50px;
+  width: 160px;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #0e0d0d;
+}

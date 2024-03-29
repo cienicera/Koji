@@ -145,6 +145,8 @@ impl MidiImpl of MidiTrait {
         Midi { events: eventlist.span() }
     }
 
+    // Reverse All Messages - To Isolate Notes MSGs, Use Extract Notes 
+
     fn reverse_notes(self: @Midi) -> Midi {
         let mut ev = self.clone().events;
         let mut rev = self.clone().events.reverse().span();
@@ -155,6 +157,7 @@ impl MidiImpl of MidiTrait {
         let mut eventlist = ArrayTrait::<Message>::new();
 
         //assign maxtime to the last message's time value in the Midi
+
         match lastmsgtime {
             Option::Some(currentev) => {
                 match currentev {
@@ -210,6 +213,118 @@ impl MidiImpl of MidiTrait {
                     Message::PROGRAM_CHANGE(ProgramChange) => { mintime = *ProgramChange.time; },
                     Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
                         mintime = *SystemExclusive.time;
+                    },
+                }
+            },
+            Option::None(_) => {}
+        };
+
+        // append last message to output midi
+
+        match lastmsgtime {
+            Option::Some(currentev) => {
+                match currentev {
+                    Message::NOTE_ON(NoteOn) => {
+                        let newnote = NoteOff {
+                            channel: *NoteOn.channel,
+                            note: *NoteOn.note,
+                            velocity: *NoteOn.velocity,
+                            time: ((maxtime - *NoteOn.time) + mintime)
+                        };
+                        let notemessage = Message::NOTE_OFF((newnote));
+                        eventlist.append(notemessage);
+                    },
+                    Message::NOTE_OFF(NoteOff) => {
+                        let newnote = NoteOn {
+                            channel: *NoteOff.channel,
+                            note: *NoteOff.note,
+                            velocity: *NoteOff.velocity,
+                            time: (maxtime - *NoteOff.time) + mintime
+                        };
+                        let notemessage = Message::NOTE_ON((newnote));
+                        eventlist.append(notemessage);
+                    },
+                    Message::SET_TEMPO(SetTempo) => {
+                        let scaledtempo = SetTempo {
+                            tempo: *SetTempo.tempo,
+                            time: match *SetTempo.time {
+                                Option::Some(time) => Option::Some((maxtime - time) + mintime),
+                                Option::None => Option::None,
+                            }
+                        };
+                        let tempomessage = Message::SET_TEMPO((scaledtempo));
+                        eventlist.append(tempomessage);
+                    },
+                    Message::TIME_SIGNATURE(TimeSignature) => {
+                        let newtimesig = TimeSignature {
+                            numerator: *TimeSignature.numerator,
+                            denominator: *TimeSignature.denominator,
+                            clocks_per_click: *TimeSignature.clocks_per_click,
+                            time: match *TimeSignature.time {
+                                Option::Some(time) => Option::Some((maxtime - time) + mintime),
+                                Option::None => Option::None,
+                            }
+                        };
+                        let tsmessage = Message::TIME_SIGNATURE((newtimesig));
+                        eventlist.append(tsmessage);
+                    },
+                    Message::CONTROL_CHANGE(ControlChange) => {
+                        let newcontrolchange = ControlChange {
+                            channel: *ControlChange.channel,
+                            control: *ControlChange.control,
+                            value: *ControlChange.value,
+                            time: (maxtime - *ControlChange.time) + mintime
+                        };
+                        let ccmessage = Message::CONTROL_CHANGE((newcontrolchange));
+                        eventlist.append(ccmessage);
+                    },
+                    Message::PITCH_WHEEL(PitchWheel) => {
+                        let newpitchwheel = PitchWheel {
+                            channel: *PitchWheel.channel,
+                            pitch: *PitchWheel.pitch,
+                            time: (maxtime - *PitchWheel.time) + mintime
+                        };
+                        let pwmessage = Message::PITCH_WHEEL((newpitchwheel));
+                        eventlist.append(pwmessage);
+                    },
+                    Message::AFTER_TOUCH(AfterTouch) => {
+                        let newaftertouch = AfterTouch {
+                            channel: *AfterTouch.channel,
+                            value: *AfterTouch.value,
+                            time: (maxtime - *AfterTouch.time) + mintime
+                        };
+                        let atmessage = Message::AFTER_TOUCH((newaftertouch));
+                        eventlist.append(atmessage);
+                    },
+                    Message::POLY_TOUCH(PolyTouch) => {
+                        let newpolytouch = PolyTouch {
+                            channel: *PolyTouch.channel,
+                            note: *PolyTouch.note,
+                            value: *PolyTouch.value,
+                            time: (maxtime - *PolyTouch.time) + mintime
+                        };
+                        let ptmessage = Message::POLY_TOUCH((newpolytouch));
+                        eventlist.append(ptmessage);
+                    },
+                    Message::PROGRAM_CHANGE(ProgramChange) => {
+                        let newprogchg = ProgramChange {
+                            channel: *ProgramChange.channel,
+                            program: *ProgramChange.program,
+                            time: (maxtime - *ProgramChange.time) + mintime
+                        };
+                        let pchgmessage = Message::PROGRAM_CHANGE((newprogchg));
+                        eventlist.append(pchgmessage);
+                    },
+                    Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
+                        let newsysex = SystemExclusive {
+                            manufacturer_id: *SystemExclusive.manufacturer_id,
+                            device_id: *SystemExclusive.device_id,
+                            data: *SystemExclusive.data,
+                            checksum: *SystemExclusive.checksum,
+                            time: (maxtime - *SystemExclusive.time) + mintime
+                        };
+                        let sysexgmessage = Message::SYSTEM_EXCLUSIVE((newsysex));
+                        eventlist.append(sysexgmessage);
                     },
                 }
             },
@@ -326,6 +441,118 @@ impl MidiImpl of MidiTrait {
                 },
                 Option::None(_) => { break; }
             };
+        };
+
+        // append first message to output midi
+
+        match firstmsgtime {
+            Option::Some(currentev) => {
+                match currentev {
+                    Message::NOTE_ON(NoteOn) => {
+                        let newnote = NoteOff {
+                            channel: *NoteOn.channel,
+                            note: *NoteOn.note,
+                            velocity: *NoteOn.velocity,
+                            time: ((maxtime - *NoteOn.time) + mintime)
+                        };
+                        let notemessage = Message::NOTE_OFF((newnote));
+                        eventlist.append(notemessage);
+                    },
+                    Message::NOTE_OFF(NoteOff) => {
+                        let newnote = NoteOn {
+                            channel: *NoteOff.channel,
+                            note: *NoteOff.note,
+                            velocity: *NoteOff.velocity,
+                            time: (maxtime - *NoteOff.time) + mintime
+                        };
+                        let notemessage = Message::NOTE_ON((newnote));
+                        eventlist.append(notemessage);
+                    },
+                    Message::SET_TEMPO(SetTempo) => {
+                        let scaledtempo = SetTempo {
+                            tempo: *SetTempo.tempo,
+                            time: match *SetTempo.time {
+                                Option::Some(time) => Option::Some((maxtime - time) + mintime),
+                                Option::None => Option::None,
+                            }
+                        };
+                        let tempomessage = Message::SET_TEMPO((scaledtempo));
+                        eventlist.append(tempomessage);
+                    },
+                    Message::TIME_SIGNATURE(TimeSignature) => {
+                        let newtimesig = TimeSignature {
+                            numerator: *TimeSignature.numerator,
+                            denominator: *TimeSignature.denominator,
+                            clocks_per_click: *TimeSignature.clocks_per_click,
+                            time: match *TimeSignature.time {
+                                Option::Some(time) => Option::Some((maxtime - time) + mintime),
+                                Option::None => Option::None,
+                            }
+                        };
+                        let tsmessage = Message::TIME_SIGNATURE((newtimesig));
+                        eventlist.append(tsmessage);
+                    },
+                    Message::CONTROL_CHANGE(ControlChange) => {
+                        let newcontrolchange = ControlChange {
+                            channel: *ControlChange.channel,
+                            control: *ControlChange.control,
+                            value: *ControlChange.value,
+                            time: (maxtime - *ControlChange.time) + mintime
+                        };
+                        let ccmessage = Message::CONTROL_CHANGE((newcontrolchange));
+                        eventlist.append(ccmessage);
+                    },
+                    Message::PITCH_WHEEL(PitchWheel) => {
+                        let newpitchwheel = PitchWheel {
+                            channel: *PitchWheel.channel,
+                            pitch: *PitchWheel.pitch,
+                            time: (maxtime - *PitchWheel.time) + mintime
+                        };
+                        let pwmessage = Message::PITCH_WHEEL((newpitchwheel));
+                        eventlist.append(pwmessage);
+                    },
+                    Message::AFTER_TOUCH(AfterTouch) => {
+                        let newaftertouch = AfterTouch {
+                            channel: *AfterTouch.channel,
+                            value: *AfterTouch.value,
+                            time: (maxtime - *AfterTouch.time) + mintime
+                        };
+                        let atmessage = Message::AFTER_TOUCH((newaftertouch));
+                        eventlist.append(atmessage);
+                    },
+                    Message::POLY_TOUCH(PolyTouch) => {
+                        let newpolytouch = PolyTouch {
+                            channel: *PolyTouch.channel,
+                            note: *PolyTouch.note,
+                            value: *PolyTouch.value,
+                            time: (maxtime - *PolyTouch.time) + mintime
+                        };
+                        let ptmessage = Message::POLY_TOUCH((newpolytouch));
+                        eventlist.append(ptmessage);
+                    },
+                    Message::PROGRAM_CHANGE(ProgramChange) => {
+                        let newprogchg = ProgramChange {
+                            channel: *ProgramChange.channel,
+                            program: *ProgramChange.program,
+                            time: (maxtime - *ProgramChange.time) + mintime
+                        };
+                        let pchgmessage = Message::PROGRAM_CHANGE((newprogchg));
+                        eventlist.append(pchgmessage);
+                    },
+                    Message::SYSTEM_EXCLUSIVE(SystemExclusive) => {
+                        let newsysex = SystemExclusive {
+                            manufacturer_id: *SystemExclusive.manufacturer_id,
+                            device_id: *SystemExclusive.device_id,
+                            data: *SystemExclusive.data,
+                            checksum: *SystemExclusive.checksum,
+                            time: (maxtime - *SystemExclusive.time) + mintime
+                        };
+                        let sysexgmessage = Message::SYSTEM_EXCLUSIVE((newsysex));
+                        eventlist.append(sysexgmessage);
+                    },
+                }
+            },
+            Option::None(_) => {}
         };
 
         Midi { events: eventlist.span() }

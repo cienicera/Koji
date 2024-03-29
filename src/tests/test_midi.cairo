@@ -789,4 +789,88 @@ mod tests {
             };
         };
     }
+
+    #[test]
+    #[available_gas(100000000000)]
+    fn reverse_notes_duration_test() {
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        let newtempo = SetTempo { tempo: 0, time: Option::Some(FP32x32 { mag: 0, sign: false }) };
+
+        let newnoteon1 = NoteOn {
+            channel: 0, note: 60, velocity: 100, time: FP32x32 { mag: 0, sign: false }
+        };
+
+        let notetwomag = FP32x32 { mag: 1000, sign: false };
+
+        let newnoteon2 = NoteOn { channel: 0, note: 71, velocity: 100, time: notetwomag };
+
+        let newnoteon3 = NoteOn {
+            channel: 0, note: 90, velocity: 100, time: FP32x32 { mag: 2000, sign: false }
+        };
+
+        let newnoteoff1 = NoteOff {
+            channel: 0, note: 60, velocity: 100, time: FP32x32 { mag: 1000, sign: false }
+        };
+
+        let newnoteoff2 = NoteOff {
+            channel: 0, note: 71, velocity: 100, time: FP32x32 { mag: 4000, sign: false }
+        };
+
+        let newnoteoff3 = NoteOff {
+            channel: 0, note: 90, velocity: 100, time: FP32x32 { mag: 5000, sign: false }
+        };
+
+        let notemessageon1 = Message::NOTE_ON((newnoteon1));
+        let notemessageon2 = Message::NOTE_ON((newnoteon2));
+
+        let notemessageoff1 = Message::NOTE_OFF((newnoteoff1));
+        let notemessageoff2 = Message::NOTE_OFF((newnoteoff2));
+
+        eventlist.append(notemessageon1);
+        eventlist.append(notemessageon2);
+
+        eventlist.append(notemessageoff1);
+        eventlist.append(notemessageoff2);
+
+        let midiobj = Midi { events: eventlist.span() };
+
+        let factor1: i32 = 3;
+        let midiobjnotes = midiobj.change_note_duration(factor1);
+
+        // Assert the correctness of the modified Midi object
+
+        let mut ev = midiobjnotes.clone().events;
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            if *NoteOn.note == 60 {
+                                assert(*NoteOn.time.mag == 0, 'result should be 0');
+                            } else if *NoteOn.note == 71 {
+                                assert(*NoteOn.time.mag == 3000, 'result should be 3000');
+                            } else if *NoteOn.note == 90 {} else {}
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            if *NoteOff.note == 60 {
+                                assert(*NoteOff.time.mag == 3000, 'result should be 6000');
+                            } else if *NoteOff.note == 71 {
+                                assert(*NoteOff.time.mag == 12000, 'result should be 4500');
+                            } else if *NoteOff.note == 90 {} else {}
+                        },
+                        Message::SET_TEMPO(_SetTempo) => {},
+                        Message::TIME_SIGNATURE(_TimeSignature) => {},
+                        Message::CONTROL_CHANGE(_ControlChange) => {},
+                        Message::PITCH_WHEEL(_PitchWheel) => {},
+                        Message::AFTER_TOUCH(_AfterTouch) => {},
+                        Message::POLY_TOUCH(_PolyTouch) => {},
+                        Message::PROGRAM_CHANGE(_ProgramChange) => {},
+                        Message::SYSTEM_EXCLUSIVE(_SystemExclusive) => {},
+                    }
+                },
+                Option::None(_) => { break; }
+            };
+        };
+    }
 }

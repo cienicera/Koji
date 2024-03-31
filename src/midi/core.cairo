@@ -940,18 +940,8 @@ impl MidiImpl of MidiTrait {
                 Option::Some(currentevent) => {
                     match currentevent {
                         Message::NOTE_ON(NoteOn) => {
-                            let outnote = keynum_to_pc(*NoteOn.note)
-                                .modal_transposition(
-                                    tonic,
-                                    currentmode,
-                                    steps.try_into().unwrap(),
-                                    if steps < 0 {
-                                        Direction::Up(())
-                                    } else {
-                                        Direction::Down(())
-                                    },
-                                );
-
+                            let mut pc = keynum_to_pc(*NoteOn.note);
+                            let outnote = pc.modal_transpositioni32(tonic, currentmode, steps);
                             let newnote = NoteOn {
                                 channel: *NoteOn.channel,
                                 note: outnote,
@@ -961,15 +951,12 @@ impl MidiImpl of MidiTrait {
 
                             let notemessage = Message::NOTE_ON((newnote));
                             eventlist.append(notemessage);
-                            //include original note
-                            eventlist.append(*currentevent);
+                        //include original note
+                        //eventlist.append(*currentevent);
                         },
                         Message::NOTE_OFF(NoteOff) => {
-                            let outnote = if steps < 0 {
-                                *NoteOff.note - steps.try_into().unwrap()
-                            } else {
-                                *NoteOff.note + steps.try_into().unwrap()
-                            };
+                            let mut pc = keynum_to_pc(*NoteOff.note);
+                            let outnote = pc.modal_transpositioni32(tonic, currentmode, steps);
 
                             let newnote = NoteOff {
                                 channel: *NoteOff.channel,
@@ -980,8 +967,8 @@ impl MidiImpl of MidiTrait {
 
                             let notemessage = Message::NOTE_OFF((newnote));
                             eventlist.append(notemessage);
-                            //include original note
-                            eventlist.append(*currentevent);
+                        //do not include original note
+                        //eventlist.append(*currentevent);
                         },
                         Message::SET_TEMPO(_SetTempo) => { eventlist.append(*currentevent); },
                         Message::TIME_SIGNATURE(_TimeSignature) => {

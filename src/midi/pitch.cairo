@@ -36,6 +36,9 @@ trait PitchClassTrait {
     fn modal_transposition(
         self: @PitchClass, tonic: PitchClass, pcoll: Span<u8>, numsteps: u8, direction: Direction
     ) -> u8;
+    fn modal_transpositioni32(
+        self: @PitchClass, tonic: PitchClass, pcoll: Span<u8>, numsteps: i32
+    ) -> u8;
 }
 
 impl PitchClassImpl of PitchClassTrait {
@@ -62,11 +65,22 @@ impl PitchClassImpl of PitchClassTrait {
     ) -> u8 {
         modal_transposition(*self, tonic, pcoll, numsteps, direction)
     }
+    fn modal_transpositioni32(
+        self: @PitchClass, tonic: PitchClass, pcoll: Span<u8>, numsteps: i32
+    ) -> u8 {
+        modal_transpositioni32(*self, tonic, pcoll, numsteps)
+    }
 }
 
 // Converts a PitchClass to a MIDI keynum
 fn pc_to_keynum(pc: PitchClass) -> u8 {
-    pc.note + (OCTAVEBASE * (pc.octave + 1))
+    let mut outkey = 0;
+    if pc.octave == 0 {
+        outkey = pc.note;
+    } else {
+        outkey = pc.note + (OCTAVEBASE * pc.octave);
+    };
+    outkey
 }
 
 // Converts i32 to a PitchInterval
@@ -264,6 +278,51 @@ fn modal_transposition(
         Direction::Up(_) => { keyn = keyn + sum; },
         Direction::Down(_) => { keyn = keyn - sum; },
         Direction::Oblique(_) => {},
+    }
+
+    keyn
+}
+
+fn modal_transpositioni32(pc: PitchClass, tonic: PitchClass, pcoll: Span<u8>, numsteps: i32) -> u8 {
+    let mut degree8 = pc.get_scale_degree(tonic, pcoll.snapshot.clone().span());
+
+    //convert scale degree to u32 in order use as index into modal step array
+    let mut degree: u32 = degree8.into();
+    let mut i = 0;
+    let mut sum = 0;
+    let mut abssteps = numsteps;
+    if numsteps < 0 {
+        abssteps = -1 * numsteps;
+    }
+    // convert scale degree to zero based counting
+    degree -= 1;
+
+    loop {
+        if i >= abssteps {
+            break;
+        }
+
+        if numsteps != abssteps {
+            if (degree == 0) {
+                degree = pcoll.snapshot.clone().len() - 1;
+            } else {
+                degree -= 1;
+            }
+            sum = sum + *pcoll.at(degree);
+        } else {
+            sum = sum + *pcoll.at(degree);
+            degree = (degree + 1) % pcoll.len();
+        }
+
+        i += 1;
+    };
+
+    let mut keyn = pc.keynum();
+
+    if numsteps != abssteps {
+        keyn = keyn - sum;
+    } else {
+        keyn = keyn + sum;
     }
 
     keyn

@@ -22,8 +22,38 @@ mod tests {
     use koji::midi::time::round_to_nearest_nth;
     use koji::midi::modes::{mode_steps};
     use koji::midi::core::{MidiTrait};
-    use koji::midi::pitch::{PitchClassTrait, keynum_to_pc};
+    use koji::midi::pitch::{PitchClassTrait, keynum_to_pc, pc_to_keynum};
     use koji::midi::modes::{major_steps};
+    use core::fmt::Display;
+    use core::fmt::Formatter;
+
+    // Move modal_transposition_i32_test & pc_keynum_conversion_test to pitch.cairo once merged
+
+    #[test]
+    #[available_gas(10000000)]
+    fn modal_transposition_i32_test() {
+        let major: Span<u8> = major_steps();
+
+        let c = PitchClass { note: 0, octave: 4 };
+        let c5 = keynum_to_pc(72);
+        let e = c5.modal_transpositioni32(c, major, 2);
+        let a = c5.modal_transpositioni32(c, major, -2);
+
+        assert(e == 76, 'Keynum for E5: 76');
+        assert(a == 69, 'Keynum for A 440: 69');
+    }
+
+    #[test]
+    #[available_gas(10000000)]
+    fn pc_keynum_conversion_test() {
+        let c = keynum_to_pc(60);
+        let ckeynum = pc_to_keynum(c);
+        let ckeynumpc = keynum_to_pc(ckeynum);
+
+        assert(ckeynum == c.keynum(), 'should be 60');
+        assert(ckeynum == ckeynumpc.keynum(), 'should be 60');
+        assert(c.keynum() == ckeynumpc.keynum(), 'should be 60');
+    }
 
     #[test]
     #[available_gas(10000000)]
@@ -201,18 +231,12 @@ mod tests {
                                     '1 should quantize to 0'
                                 );
                                 let num = *NoteOn.time.mag.try_into().unwrap();
-                            // 'num'.print();
-                            //  num.print();
                             } else if *NoteOn.note == 71 {
                                 let num2 = *NoteOn.time.mag.try_into().unwrap();
                                 assert(num2 == 1000, '1001 should quantize to 1000');
-                            //  'num2'.print();
-                            //  num2.print();
                             } else if *NoteOn.note == 90 {
                                 let num3 = *NoteOn.time.mag.try_into().unwrap();
                                 assert(num3 == 2000, '1500 should quantize to 2000');
-                            //  'num3'.print();
-                            //   num3.print();
                             } else {}
                         },
                         Message::NOTE_OFF(_NoteOff) => {},
@@ -314,109 +338,6 @@ mod tests {
             };
         };
     }
-
-    #[test]
-    #[available_gas(10000000)]
-    fn reverse_notes_test() {
-        let mut eventlist = ArrayTrait::<Message>::new();
-
-        let newtempo = SetTempo { tempo: 0, time: Option::Some(FP32x32 { mag: 0, sign: false }) };
-
-        let newnoteon1 = NoteOn {
-            channel: 0, note: 60, velocity: 100, time: FP32x32 { mag: 0, sign: false }
-        };
-
-        let newnoteon2 = NoteOn {
-            channel: 0, note: 21, velocity: 100, time: FP32x32 { mag: 1000, sign: false }
-        };
-
-        let newnoteon3 = NoteOn {
-            channel: 0, note: 90, velocity: 100, time: FP32x32 { mag: 1500, sign: false }
-        };
-
-        let newnoteoff1 = NoteOff {
-            channel: 0, note: 60, velocity: 100, time: FP32x32 { mag: 2000, sign: false }
-        };
-
-        let newnoteoff2 = NoteOff {
-            channel: 0, note: 21, velocity: 100, time: FP32x32 { mag: 1500, sign: false }
-        };
-
-        let newnoteoff3 = NoteOff {
-            channel: 0, note: 90, velocity: 100, time: FP32x32 { mag: 5000, sign: false }
-        };
-
-        let notemessageon1 = Message::NOTE_ON((newnoteon1));
-        let notemessageon2 = Message::NOTE_ON((newnoteon2));
-        let notemessageon3 = Message::NOTE_ON((newnoteon3));
-
-        let notemessageoff1 = Message::NOTE_OFF((newnoteoff1));
-        let notemessageoff2 = Message::NOTE_OFF((newnoteoff2));
-        let notemessageoff3 = Message::NOTE_OFF((newnoteoff3));
-
-        let tempomessage = Message::SET_TEMPO((newtempo));
-
-        eventlist.append(tempomessage);
-
-        eventlist.append(notemessageon1);
-        eventlist.append(notemessageon2);
-        eventlist.append(notemessageon3);
-
-        eventlist.append(notemessageoff1);
-        eventlist.append(notemessageoff2);
-        eventlist.append(notemessageoff3);
-
-        let midiobj = Midi { events: eventlist.span() };
-        let midiobjnotes = midiobj.reverse_notes();
-        let mut ev = midiobjnotes.clone().events;
-
-        loop {
-            match ev.pop_front() {
-                Option::Some(currentevent) => {
-                    match currentevent {
-                        Message::NOTE_ON(NoteOn) => {
-                            //find test notes and assert that times are unchanged
-
-                            if *NoteOn.note == 60 {
-                                let ptest = *NoteOn.time.mag.try_into().unwrap();
-                            //   'reverse note time'.print();
-                            //   ptest.print();
-                            //  assert(*NoteOn.time.mag == 0, 'result should be 0');
-                            } else if *NoteOn
-                                .note == 71 { //   assert(*NoteOn.time.mag == 1000, 'result should be 1000');
-                            } else if *NoteOn
-                                .note == 90 { //   assert(*NoteOn.time.mag == 1500, 'result should be 1500');
-                            } else {}
-                        },
-                        Message::NOTE_OFF(NoteOff) => {
-                            if *NoteOff
-                                .note == 60 { //    assert(*NoteOff.time.mag == 0, 'result should be 6000');
-                            } else if *NoteOff.note == 71 { // 'ptest'.print();
-                            // let ptest = *NoteOff.velocity.try_into().unwrap();
-                            // ptest.print();
-                            // 'ptest'.print();
-                            //   assert(*NoteOff.time.mag == 4500, 'result should be 4500');
-                            } else if *NoteOff
-                                .note == 90 { //    assert(*NoteOff.time.mag == 15000, 'result should be 15000');
-                            } else {}
-                        // let notemessage = Message::NOTE_OFF((newnote));
-                        // eventlist.append(notemessage);
-                        },
-                        Message::SET_TEMPO(_SetTempo) => {},
-                        Message::TIME_SIGNATURE(_TimeSignature) => {},
-                        Message::CONTROL_CHANGE(_ControlChange) => {},
-                        Message::PITCH_WHEEL(_PitchWheel) => {},
-                        Message::AFTER_TOUCH(_AfterTouch) => {},
-                        Message::POLY_TOUCH(_PolyTouch) => {},
-                        Message::PROGRAM_CHANGE(_ProgramChange) => {},
-                        Message::SYSTEM_EXCLUSIVE(_SystemExclusive) => {},
-                    }
-                },
-                Option::None(_) => { break; }
-            };
-        };
-    }
-
 
     #[test]
     #[available_gas(10000000000000)]
@@ -595,21 +516,13 @@ mod tests {
 
         let midiobj = Midi { events: eventlist.span() };
 
-        // minor third - 3 semitones
-        //let minorthird = i32 { mag: 3, sign: false };
         let minorthird2: i32 = 3;
-
-        // octave - 12 semitones
-
-        // let octave = i32 { mag: 12, sign: true };
-        let _octave2: i32 = 12;
-
-        let octave3: i32 = -12;
+        let octavedown: i32 = -12;
         let octave4: i32 = 12;
-        assert(octave3 + octave4 == 0, 'result should be 0');
+        assert(octavedown + octave4 == 0, 'result should be 0');
 
         let midiobjnotesup = midiobj.transpose_notes(minorthird2);
-        let midiobjnotesdown = midiobj.transpose_notes(octave3);
+        let midiobjnotesdown = midiobj.transpose_notes(octavedown);
 
         // Assert the correctness of the modified Midi object
 
@@ -756,7 +669,7 @@ mod tests {
                 Option::Some(currentevent) => {
                     match currentevent {
                         Message::NOTE_ON(NoteOn) => {
-                            //find test notes and assert that times are unchanged
+                            //find test notes and assert that times are properly scaled
 
                             if *NoteOn.note == 60 {
                                 assert(*NoteOn.time.mag == 0, 'result should be 0');
@@ -792,7 +705,7 @@ mod tests {
 
     #[test]
     #[available_gas(100000000000)]
-    fn reverse_notes_duration_test() {
+    fn reverse_notes_test() {
         let mut eventlist = ArrayTrait::<Message>::new();
 
         let newtempo = SetTempo { tempo: 0, time: Option::Some(FP32x32 { mag: 0, sign: false }) };
@@ -859,6 +772,137 @@ mod tests {
                                 assert(*NoteOff.time.mag == 12000, 'result should be 12000');
                             } else if *NoteOff.note == 90 {} else {}
                         },
+                        Message::SET_TEMPO(_SetTempo) => {},
+                        Message::TIME_SIGNATURE(_TimeSignature) => {},
+                        Message::CONTROL_CHANGE(_ControlChange) => {},
+                        Message::PITCH_WHEEL(_PitchWheel) => {},
+                        Message::AFTER_TOUCH(_AfterTouch) => {},
+                        Message::POLY_TOUCH(_PolyTouch) => {},
+                        Message::PROGRAM_CHANGE(_ProgramChange) => {},
+                        Message::SYSTEM_EXCLUSIVE(_SystemExclusive) => {},
+                    }
+                },
+                Option::None(_) => { break; }
+            };
+        };
+    }
+
+    #[test]
+    #[available_gas(1000000000000)]
+    fn generate_harmony_test() {
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        let newnoteon1 = NoteOn {
+            channel: 0, note: 60, velocity: 100, time: FP32x32 { mag: 100, sign: false }
+        };
+
+        let notetwomag = FP32x32 { mag: 1000, sign: false };
+
+        let newnoteon2 = NoteOn { channel: 0, note: 71, velocity: 100, time: notetwomag };
+
+        let newnoteon3 = NoteOn {
+            channel: 0, note: 88, velocity: 100, time: FP32x32 { mag: 2000, sign: false }
+        };
+
+        let newnoteoff1 = NoteOff {
+            channel: 0, note: 60, velocity: 100, time: FP32x32 { mag: 2000, sign: false }
+        };
+
+        let newnoteoff2 = NoteOff {
+            channel: 0, note: 71, velocity: 100, time: FP32x32 { mag: 4000, sign: false }
+        };
+
+        let newnoteoff3 = NoteOff {
+            channel: 0, note: 88, velocity: 100, time: FP32x32 { mag: 5000, sign: false }
+        };
+
+        let notemessageon1 = Message::NOTE_ON((newnoteon1));
+        let notemessageon2 = Message::NOTE_ON((newnoteon2));
+        let notemessageon3 = Message::NOTE_ON((newnoteon3));
+
+        let notemessageoff1 = Message::NOTE_OFF((newnoteoff1));
+        let notemessageoff2 = Message::NOTE_OFF((newnoteoff2));
+        let notemessageoff3 = Message::NOTE_OFF((newnoteoff3));
+
+        eventlist.append(notemessageon1);
+        eventlist.append(notemessageon2);
+        eventlist.append(notemessageon3);
+
+        eventlist.append(notemessageoff1);
+        eventlist.append(notemessageoff2);
+        eventlist.append(notemessageoff3);
+
+        let midiobj = Midi { events: eventlist.span() };
+
+        let upthird: i32 = 2;
+        let downfourth: i32 = -3;
+        let tonic = PitchClass { note: 0, octave: 4 };
+
+        let midiobjnotesup = midiobj.generate_harmony(upthird, tonic, Modes::Major);
+        let midiobjnotesdown = midiobj.generate_harmony(downfourth, tonic, Modes::Major);
+
+        // Assert the correctness of the modified Midi object
+        // test to ensure correct positive step transpositions
+
+        let mut ev = midiobjnotesup.clone().events;
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            // find notes by time, test notes and assert that correct harmonization
+
+                            if *NoteOn.time.mag.try_into().unwrap() == 100 {
+                                assert(*NoteOn.note == 64, 'result should be 64');
+                            } else if *NoteOn.time.mag.try_into().unwrap() == 1000 {
+                                let abc = *NoteOn.note;
+
+                                println!("note66 {}", abc);
+                                assert(*NoteOn.note == 74, 'result should be 74');
+                            } else if *NoteOn.time.mag.try_into().unwrap() == 2000 {
+                                let ab = *NoteOn.note;
+
+                                println!("noteb {}", ab);
+                                assert(*NoteOn.note == 91, 'result should be 91');
+                            } else {}
+                        },
+                        Message::NOTE_OFF(_NoteOff) => {},
+                        Message::SET_TEMPO(_SetTempo) => {},
+                        Message::TIME_SIGNATURE(_TimeSignature) => {},
+                        Message::CONTROL_CHANGE(_ControlChange) => {},
+                        Message::PITCH_WHEEL(_PitchWheel) => {},
+                        Message::AFTER_TOUCH(_AfterTouch) => {},
+                        Message::POLY_TOUCH(_PolyTouch) => {},
+                        Message::PROGRAM_CHANGE(_ProgramChange) => {},
+                        Message::SYSTEM_EXCLUSIVE(_SystemExclusive) => {},
+                    }
+                },
+                Option::None(_) => { break; }
+            };
+        };
+
+        // test to ensure correct negative step transpositions
+
+        let mut evdown = midiobjnotesdown.clone().events;
+        loop {
+            match evdown.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            // find notes by time, test notes and assert that correct harmonization
+
+                            if *NoteOn.time.mag.try_into().unwrap() == 100 {
+                                assert(*NoteOn.note == 55, 'result should be 55');
+                            } else if *NoteOn.time.mag.try_into().unwrap() == 1000 {
+                                assert(*NoteOn.note == 65, 'result should be 65');
+                            } else if *NoteOn.time.mag.try_into().unwrap() == 2000 {
+                                let ab = *NoteOn.note;
+
+                                println!("noteb {}", ab);
+                                assert(*NoteOn.note == 83, 'result should be 83');
+                            } else {}
+                        },
+                        Message::NOTE_OFF(_NoteOff) => {},
                         Message::SET_TEMPO(_SetTempo) => {},
                         Message::TIME_SIGNATURE(_TimeSignature) => {},
                         Message::CONTROL_CHANGE(_ControlChange) => {},

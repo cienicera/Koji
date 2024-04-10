@@ -8,8 +8,10 @@ def midi_to_cairo_struct(midi_file, output_file):
     cairo_events = []
 
     for track in mid.tracks:
+        cumulative_time = 0  # Keep track of the cumulative time in ticks
         for msg in track:
-            time = format_fp32x32(msg.time)
+            cumulative_time += msg.time
+            time = format_fp32x32(cumulative_time)
 
             if msg.type == 'note_on':
                 cairo_events.append(
@@ -59,11 +61,20 @@ def cairo_struct_to_midi(cairo_file, output_file):
     mid = MidiFile()
     track = MidiTrack()
     mid.tracks.append(track)
+    
+    last_time = 0  # This will keep track of the last event's time to calculate delta times
 
     for match in note_on_pattern.finditer(cairo_data):
-        channel, note, velocity, time = match.groups()
-        time = parse_fp32x32(time)
-        track.append(Message('note_on', note=int(note), velocity=int(velocity), time=time, channel=int(channel)))
+        channel, note, velocity, time_str = match.groups()
+        time = parse_fp32x32(time_str)
+        delta_time = time - last_time
+        if delta_time < 0:
+            print(f"Error: Negative delta_time encountered. time: {time}, last_time: {last_time}, delta_time: {delta_time}")
+            print(f"Event: {match.group(0)}")
+            continue  # Skip this event or handle it appropriately
+        last_time = time
+        track.append(Message('note_on', note=int(note), velocity=int(velocity), time=delta_time, channel=int(channel)))
+
 
     for match in note_off_pattern.finditer(cairo_data):
         channel, note, velocity, time = match.groups()
@@ -259,18 +270,15 @@ def midi_to_json(midi_file, output_file):
     with open(output_file, 'w') as file:
         file.write(json_data)
 
+def format_fp32x32(ticks):
+    # Convert ticks to FP32x32 format
+    return f"FP32x32 {{ mag: {ticks}, sign: false }}"
 
-def format_fp32x32(time):
-    return f"FP32x32 {{ mag: {time}, sign: false }}"
-
-# Helper function to parse FP32x32 formatted string (needed for time, tempo, etc.)
 def parse_fp32x32(fp32x32_str):
     # Extract the magnitude part from the FP32x32 formatted string
     mag_match = re.search(r"mag: (\d+)", fp32x32_str)
     if mag_match:
-        mag = int(mag_match.group(1))
-        # Assuming the magnitude directly represents the value we want
-        return mag
+        ticks = int(mag_match.group(1))
+        return ticks
     else:
-        # Return a default value if parsing fails
         return 0

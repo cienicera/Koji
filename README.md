@@ -3,6 +3,13 @@
 Autonomous Music library based on previous [work](https://github.com/caseywescott/MusicTools-StarkNet) made by Casey Wescott.
 
 # Midi Conversion
+
+Convert Cairo to MIDI format:
+
+```bash
+make convert-to-midi INPUT_FILE="path/to/midi/file.cairo" OUTPUT_FILE="path/to/midi/file/composition"
+```
+
 Convert Midi to JSON format:
 ```bash
 make convert-json MIDI_FILE="path/to/midi/file.mid" OUTPUT_FILE="path/to/output"

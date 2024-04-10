@@ -20,6 +20,10 @@ use koji::midi::modes::{mode_steps};
 use koji::midi::pitch::{PitchClassTrait, keynum_to_pc};
 use koji::midi::velocitycurve::{VelocityCurveTrait};
 
+fn main(){
+    println!("stuff")
+}
+
 trait MidiTrait {
     /// =========== NOTE MANIPULATION ===========
     /// Instantiate a Midi.
@@ -52,11 +56,75 @@ trait MidiTrait {
     fn arpeggiate_chords(self: @Midi, pattern: ArpPattern) -> Midi;
     /// Add or modify dynamics (velocity) of notes based on a specified curve or pattern.
     fn edit_dynamics(self: @Midi, curve: VelocityCurve) -> Midi;
+    fn midi_2_file(self: @Midi) -> Midi;
 }
 
 impl MidiImpl of MidiTrait {
     fn new() -> Midi {
         Midi { events: array![].span() }
+    }
+
+    fn midi_2_file(self: @Midi) -> Midi { //Symbol mapping for saving and reformatting    
+        // q1q -> {
+        // q2q -> }
+        // q3q -> ;
+        // q4q -> _
+
+        let mut ev = self.clone().events;
+        let mut eventlist = ArrayTrait::<Message>::new();
+
+        loop {
+            match ev.pop_front() {
+                Option::Some(currentevent) => {
+                    match currentevent {
+                        Message::NOTE_ON(NoteOn) => {
+                            let note = *NoteOn.note;
+                            let channel = *NoteOn.channel;
+                            let velocity = *NoteOn.velocity;
+                            let time = *NoteOn.time.mag;
+                            let intime: u32 = time.try_into().unwrap();
+                            println!(
+                                "Message::NOTEq4qON(NoteOn q1q channel: {}, note: {}, velocity: {}, time: FP32x32 q1q mag: {}, sign: false q2q q2q),",
+                                channel,
+                                note,
+                                velocity,
+                                intime
+                            );
+                        },
+                        Message::NOTE_OFF(NoteOff) => {
+                            let note = *NoteOff.note;
+                            let channel = *NoteOff.channel;
+                            let velocity = *NoteOff.velocity;
+                            let time = *NoteOff.time.mag;
+                            let intime: u32 = time.try_into().unwrap();
+                            println!(
+                                "Message::NOTEq4qOFF(NoteOff q1q channel: {}, note: {}, velocity: {}, time: FP32x32 q1q mag: {}, sign: false q2q q2q),",
+                                channel,
+                                note,
+                                velocity,
+                                intime
+                            );
+                        },
+                        Message::SET_TEMPO(_SetTempo) => {
+                            // println!(
+                            //     "Message::SETq4qTEMPO(SetTempo q1q tempo: FP32x32 q1q mag: 251046, sign: false q2q, time: Option::Some(FP32x32 q1q mag: 0, sign: false q2q) q2q),"
+                            // );
+                        },
+                        Message::TIME_SIGNATURE(_TimeSignature) => {},
+                        Message::CONTROL_CHANGE(_ControlChange) => {},
+                        Message::PITCH_WHEEL(_PitchWheel) => {},
+                        Message::AFTER_TOUCH(_AfterTouch) => {},
+                        Message::POLY_TOUCH(_PolyTouch) => {},
+                        Message::PROGRAM_CHANGE(_ProgramChange) => {},
+                        Message::SYSTEM_EXCLUSIVE(_SystemExclusive) => {},
+                    }
+                },
+                Option::None(_) => { break; }
+            };
+        };
+
+        // Create a new Midi object with the modified event list
+        Midi { events: eventlist.span() }
     }
 
     fn append_message(self: @Midi, msg: Message) -> Midi {

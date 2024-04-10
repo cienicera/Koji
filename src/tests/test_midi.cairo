@@ -115,6 +115,15 @@ mod tests {
         // test to ensure correct positive note transpositions
 
         let mut ev = midiobjnotesup.clone().events;
+
+            let mut i: usize = 0;
+    loop {
+        if i > 10 {
+            break;
+        }
+        println!("i = {}", i);
+        i += 1;
+    }
         loop {
             match ev.pop_front() {
                 Option::Some(currentevent) => {

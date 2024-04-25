@@ -1,5 +1,8 @@
 import mido
 
+# Utility to print Midi Messages directly from a .mid file.
+
+
 def parse_midi_file(file_path):
     mid = mido.MidiFile(file_path)
 
@@ -23,6 +26,6 @@ def parse_midi_file(file_path):
     return messages
 
 # Example usage
-midi_messages = parse_midi_file('/file/path/composition.mid')
+midi_messages = parse_midi_file('/your/file.mid')
 for msg in midi_messages:
     print(msg)

@@ -47,94 +47,41 @@ def midi_to_cairo_struct(midi_file, output_file):
     with open(output_file, 'w') as file:
         file.write(full_cairo_code)
 
-
-    # Cairo 2 MIDI that sorts the events by time - I think this is incorrect - should use delta time
-def cairo_struct_to_midi2(cairo_file, output_file):
+def cairo_to_midi_struct(cairo_file, output_file):
     with open(cairo_file, 'r') as file:
-        cairo_data = file.read()
+        track = MidiTrack()
+        mid = MidiFile()
+        mid.tracks.append(track)
 
-    # Define a list to hold MIDI messages along with their time values
-    messages = []
+        for line in file:
+            # Match different MIDI event types in the Cairo data
+            note_on_match = re.match(r"Message::NOTE_ON\(NoteOn \{ channel: (\d+), note: (\d+), velocity: (\d+), time: (.+?) \}\)", line)
+            note_off_match = re.match(r"Message::NOTE_OFF\(NoteOff \{ channel: (\d+), note: (\d+), velocity: (\d+), time: (.+?) \}\)", line)
+            set_tempo_match = re.match(r"Message::SET_TEMPO\(SetTempo \{ tempo: (.+?), time: (.+?) \}\)", line)
+            time_signature_match = re.match(r"Message::TIME_SIGNATURE\(TimeSignature \{ numerator: (\d+), denominator: (\d+), clocks_per_click: (\d+), time: None \}\)", line)
 
-    # Regex patterns to match different MIDI event types in the Cairo data
-    note_on_pattern = re.compile(r"Message::NOTE_ON\(NoteOn \{ channel: (\d+), note: (\d+), velocity: (\d+), time: (.+?) \}\)")
-    note_off_pattern = re.compile(r"Message::NOTE_OFF\(NoteOff \{ channel: (\d+), note: (\d+), velocity: (\d+), time: (.+?) \}\)")
-    set_tempo_pattern = re.compile(r"Message::SET_TEMPO\(SetTempo \{ tempo: (.+?), time: (.+?) \}\)")
-    time_signature_pattern = re.compile(r"Message::TIME_SIGNATURE\(TimeSignature \{ numerator: (\d+), denominator: (\d+), clocks_per_click: (\d+), time: None \}\)")
+            if note_on_match:
+                channel, note, velocity, time = note_on_match.groups()
+                time = parse_fp32x32(time)
+                track.append(Message('note_on', note=int(note), velocity=int(velocity), time=time, channel=int(channel)))
 
-    # Iterate over matches and populate the 'messages' list
-    for match in note_on_pattern.finditer(cairo_data):
-        channel, note, velocity, time = match.groups()
-        time = parse_fp32x32c(time)
-        messages.append((time, Message('note_on', note=int(note), velocity=int(velocity), time=time, channel=int(channel))))
+            elif note_off_match:
+                channel, note, velocity, time = note_off_match.groups()
+                time = parse_fp32x32(time)
+                track.append(Message('note_off', note=int(note), velocity=int(velocity), time=time, channel=int(channel)))
 
-    for match in note_off_pattern.finditer(cairo_data):
-        channel, note, velocity, time = match.groups()
-        time = parse_fp32x32c(time)
-        messages.append((time, Message('note_off', note=int(note), velocity=int(velocity), time=time, channel=int(channel))))
+            elif set_tempo_match:
+                tempo, _ = set_tempo_match.groups()
+                # Assume the tempo is directly usable or convert it as necessary
+                tempo = parse_fp32x32(tempo)  # This may need adjustment based on your tempo representation
+                track.append(mido.MetaMessage('set_tempo', tempo=tempo, time=0))
 
-    for match in set_tempo_pattern.finditer(cairo_data):
-        tempo, time = match.groups()
-        # Assume the tempo is directly usable or convert it as necessary
-        tempo = parse_fp32x32c(tempo)  # This may need adjustment based on your tempo representation
-        messages.append((int(time), MetaMessage('set_tempo', tempo=tempo)))
+            elif time_signature_match:
+                numerator, denominator, clocks_per_click = time_signature_match.groups()
+                # Assuming `mido` accepts time signature as integers directly
+                track.append(mido.MetaMessage('time_signature', numerator=int(numerator), denominator=int(denominator), clocks_per_click=int(clocks_per_click), notated_32nd_notes_per_beat=8, time=0))
 
-    for match in time_signature_pattern.finditer(cairo_data):
-        numerator, denominator, clocks_per_click = match.groups()
-        messages.append((0, MetaMessage('time_signature', numerator=int(numerator), denominator=int(denominator), clocks_per_click=int(clocks_per_click), notated_32nd_notes_per_beat=8)))
-
-    # Sort the messages by time
-    messages.sort(key=lambda x: x[0])
-
-    # Create a new MIDI file and track
-    mid = MidiFile()
-    track = MidiTrack()
-    mid.tracks.append(track)
-
-    # Append the sorted messages to the MIDI track
-    for _, msg in messages:
-        track.append(msg)
-
-    # Save the MIDI file
-    mid.save(output_file)        
-
-def cairo_struct_to_midi(cairo_file, output_file):
-    with open(cairo_file, 'r') as file:
-        cairo_data = file.read()
-
-    # Regex patterns to match different MIDI event types in the Cairo data
-    note_on_pattern = re.compile(r"Message::NOTE_ON\(NoteOn \{ channel: (\d+), note: (\d+), velocity: (\d+), time: (.+?) \}\)")
-    note_off_pattern = re.compile(r"Message::NOTE_OFF\(NoteOff \{ channel: (\d+), note: (\d+), velocity: (\d+), time: (.+?) \}\)")
-    set_tempo_pattern = re.compile(r"Message::SET_TEMPO\(SetTempo \{ tempo: (.+?), time: (.+?) \}\)")
-    time_signature_pattern = re.compile(r"Message::TIME_SIGNATURE\(TimeSignature \{ numerator: (\d+), denominator: (\d+), clocks_per_click: (\d+), time: None \}\)")
-
-    mid = MidiFile()
-    track = MidiTrack()
-    mid.tracks.append(track)
-
-    for match in note_on_pattern.finditer(cairo_data):
-        channel, note, velocity, time = match.groups()
-        time = parse_fp32x32b(time)
-        track.append(Message('note_on', note=int(note), velocity=int(velocity), time=time, channel=int(channel)))
-
-    for match in note_off_pattern.finditer(cairo_data):
-        channel, note, velocity, time = match.groups()
-        time = parse_fp32x32b(time)
-        track.append(Message('note_off', note=int(note), velocity=int(velocity), time=time, channel=int(channel)))
-
-    for match in set_tempo_pattern.finditer(cairo_data):
-        tempo, _ = match.groups()
-        # Assume the tempo is directly usable or convert it as necessary
-        tempo = parse_fp32x32b(tempo)  # This may need adjustment based on your tempo representation
-        track.append(mido.MetaMessage('set_tempo', tempo=tempo, time=0))
-
-    for match in time_signature_pattern.finditer(cairo_data):
-        numerator, denominator, clocks_per_click = match.groups()
-        # Assuming `mido` accepts time signature as integers directly
-        # track.append(mido.MetaMessage('time_signature', numerator=int(numerator), denominator=int(denominator), clocks_per_metronome_click=int(clocks_per_click), thirty_seconds_per_24_clocks=8, time=0))
-        track.append(mido.MetaMessage('time_signature', numerator=int(numerator), denominator=int(denominator), clocks_per_click=int(clocks_per_click), notated_32nd_notes_per_beat=8, time=0))
-
-    mid.save(output_file)
+    mid.save(output_file)    
 
 def midi_to_json(midi_file, output_file):
     mid = mido.MidiFile(midi_file)
@@ -182,33 +129,19 @@ def format_fp32x32(time):
     return f"FP32x32 {{ mag: {time}, sign: false }}"
 
 # Helper function to parse FP32x32 formatted string (needed for time, tempo, etc.)
+
 def parse_fp32x32(fp32x32_str):
     # Extract the magnitude part from the FP32x32 formatted string
-    mag_match = re.search(r"mag: (\d+)", fp32x32_str)
-    if mag_match:
-        mag = int(mag_match.group(1))
-        # Assuming the magnitude directly represents the value we want
-        return mag
-    else:
-        # Return a default value if parsing fails
-        return 0
-    
-def parse_fp32x32b(fp32x32_str):
-    # Extract the magnitude and sign parts from the FP32x32 formatted string
     mag_match = re.search(r"mag: (\d+), sign: (\w+)", fp32x32_str)
     if mag_match:
         mag = int(mag_match.group(1))
-        sign = mag_match.group(2)
-        # Check the sign and adjust the magnitude accordingly
-        if sign == "true":
-            mag = -mag
-        return mag
+        return mag  # Return the magnitude value
     else:
         # Return a default value if parsing fails
         return 0
    
     # Uses fp32x32 to tick calculation
-def parse_fp32x32c(fp32x32_str, bpm=120, ticks_per_beat=480):
+def parse_fp32x32_ticks(fp32x32_str, bpm=120, ticks_per_beat=480):
     # Extract the magnitude and sign parts from the FP32x32 formatted string
     mag_match = re.search(r"mag: (\d+), sign: (\w+)", fp32x32_str)
     if mag_match:

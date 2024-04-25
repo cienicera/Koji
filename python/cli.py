@@ -1,5 +1,5 @@
 import argparse
-from midi_conversion import midi_to_cairo_struct, midi_to_json, cairo_struct_to_midi
+from midi_conversion import midi_to_cairo_struct, midi_to_json, cairo_to_midi_struct
 
 def main():
     parser = argparse.ArgumentParser(description='Convert MIDI files to and from Cairo or JSON format')
@@ -18,7 +18,7 @@ def main():
         print(f"Converted {args.input_file} to JSON format in {args.output_file} ✅")
     elif args.format == 'midi':
         # Assuming the input for midi format is a structured format or json that needs to be converted back to MIDI
-        cairo_struct_to_midi(args.input_file, args.output_file)  # Implement this functionality based on your data structure
+        cairo_to_midi_struct(args.input_file, args.output_file)  # Implement this functionality based on your data structure
         print(f"Converted {args.input_file} from Cairo/JSON format back to MIDI in {args.output_file} ✅")
 
 if __name__ == '__main__':
